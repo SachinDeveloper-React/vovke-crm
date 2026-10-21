@@ -105,6 +105,12 @@ export const navData: NavGroupData[] = [
         caption: 'Badges, who holds them, what unlocks them',
       },
       {
+        title: 'Workouts',
+        path: paths.dashboard.workouts,
+        icon: <Iconify icon="solar:dumbbell-large-bold-duotone" />,
+        caption: 'Exercises, and the templates built from them',
+      },
+      {
         title: 'Nutrition',
         path: paths.dashboard.nutrition,
         icon: <Iconify icon="solar:heart-pulse-bold-duotone" />,

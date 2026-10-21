@@ -38,6 +38,15 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
+    serverActions: {
+      // The food library arrives as a spreadsheet, and a Server Action's
+      // body is capped at 1 MB by default — a `.xlsx` with a few thousand
+      // rows goes past that. 12 MB leaves room above the 10 MB the reader
+      // accepts (`MAX_SHEET_BYTES`) for multipart boundaries and headers,
+      // so the refusal an operator sees is the reader's sentence about
+      // their file rather than a framework error about a body size.
+      bodySizeLimit: '12mb',
+    },
     turbopackFileSystemCacheForDev: true,
     turbopackFileSystemCacheForBuild: true,
     optimizePackageImports: [

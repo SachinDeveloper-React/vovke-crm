@@ -78,6 +78,8 @@ export const paths = {
     nutrition: `${ROOTS.DASHBOARD}/nutrition`,
     /** The food library every member searches and quick-adds from (RULES N8). */
     foods: `${ROOTS.DASHBOARD}/foods`,
+    /** The gym: exercises, and the workout templates built from them. */
+    workouts: `${ROOTS.DASHBOARD}/workouts`,
     /** The diet plan library, days and meals (RULES N10). */
     dietPlans: `${ROOTS.DASHBOARD}/diet-plans`,
     dietPlan: (planId: string) => `${ROOTS.DASHBOARD}/diet-plans/${encodeURIComponent(planId)}` as const,

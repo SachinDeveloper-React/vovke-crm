@@ -2140,3 +2140,47 @@ export interface NutritionOverview {
     libraryPageSize: number;
   };
 }
+
+// ─── GET/POST/PUT/DELETE /admin/training ───────────────────────────────────
+
+export interface AdminExercise {
+  id: string;
+  name: string;
+  muscleGroup: string;
+  equipment: string;
+  /** Cardio work is timed; a lift is counted in reps. */
+  isTimed: boolean;
+  imageUrl: string | null;
+  /** The templates that include it. */
+  templates: { id: string; title: string }[];
+  /** Sets members have logged of it. */
+  logged: { sessions: number; members: number; lastAt: string | null };
+}
+
+export interface AdminWorkoutTemplate {
+  id: string;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  muscleGroups: string[];
+  exerciseIds: string[];
+  /** Each one's name, in the order they are performed. */
+  exercises: { id: string; name: string | null }[];
+  /** Ids no exercise answers to — the app drops a template holding one. */
+  missing: string[];
+  sort: number;
+}
+
+export interface Training {
+  muscleGroups: string[];
+  equipment: string[];
+  totals: { exercises: number; templates: number; broken: number; unused: number; sessions: number };
+  exercises: AdminExercise[];
+  templates: AdminWorkoutTemplate[];
+}
+
+export interface TrainingResult extends Training {
+  created?: boolean;
+  deleted?: true;
+  id?: string;
+}

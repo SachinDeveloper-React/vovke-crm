@@ -37,8 +37,13 @@ export class SheetError extends Error {}
 const SPREADSHEET = /\.(xlsx|xlsm)$/i;
 const DELIMITED = /\.(csv|tsv|txt)$/i;
 
-/** 25 MB: a food library is thousands of rows of short text, not a photo album. */
-export const MAX_SHEET_BYTES = 25 * 1024 * 1024;
+/**
+ * 10 MB: a food library is thousands of rows of short text, not a photo
+ * album. It sits under the 12 MB a Server Action body is allowed
+ * (`next.config.ts`), so an over-large file is refused here, by name and
+ * size, rather than by the framework.
+ */
+export const MAX_SHEET_BYTES = 10 * 1024 * 1024;
 
 /**
  * The key a column is looked up by.
@@ -173,7 +178,7 @@ async function readWorkbook(buffer: ArrayBuffer): Promise<Sheet> {
 export async function readSheet(file: File): Promise<Sheet> {
   if (file.size === 0) throw new SheetError('That file is empty.');
   if (file.size > MAX_SHEET_BYTES) {
-    throw new SheetError(`That file is ${Math.round(file.size / 1024 / 1024)} MB; the limit is 25 MB.`);
+    throw new SheetError(`That file is ${Math.round(file.size / 1024 / 1024)} MB; the limit is 10 MB.`);
   }
 
   const name = file.name || 'sheet';

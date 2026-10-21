@@ -69,7 +69,7 @@ export function ImportFoodsForm() {
         onChange={event => setFile((event.target as HTMLInputElement).value)}
         slotProps={{ inputLabel: { shrink: true }, htmlInput: { accept: '.xlsx,.xlsm,.csv,.tsv,.txt' } }}
         label="The sheet"
-        helperText="Up to 25 MB"
+        helperText="Up to 10 MB"
       />
 
       <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>

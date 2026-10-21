@@ -790,6 +790,62 @@ export interface NudgeResult {
 
 // ─── GET /admin/users/:id/steps ────────────────────────────────────────────
 
+/**
+ * One source behind a day's steps (D-51): an app that wrote to Health
+ * Connect, or `phone` — the handset's own counter, which has no package name.
+ *
+ * `steps` is what the source wrote; `answered` marks the one the day's own
+ * figure came from. The rest of a day's sources were seen and not taken, and
+ * that is the distinction support's "my steps are missing" usually turns on.
+ */
+export interface StepSource {
+  /** `phone`, or the app's package name. */
+  key: string;
+  appName: string;
+  /** `self` for the phone's counter, else what the tracker called it. */
+  kind: string;
+  isWearable: boolean;
+  isPlatform: boolean;
+  steps: number;
+  /** Of that, what the rules let count; null when the tracker could not split it. */
+  countable: number | null;
+  manualSteps: number | null;
+  /** `phone`, or `used` / `lower` / `not_counted` / `unverified` / `blocked` / `not_computed`. */
+  status: string;
+  /** The day's own figure came from this source. */
+  answered: boolean;
+  /** Shown to the member and never verified — displayed, never paid. */
+  shown: boolean;
+  deviceIds: string[];
+}
+
+/** What one phone saw of a day, and which app answered on it. */
+export interface StepDayDevice {
+  deviceId: string;
+  name: string;
+  source: string | null;
+  candidate: number;
+  verified: boolean;
+  verifiedSteps: number;
+  plausibility: number | null;
+  /** The Health Connect source that answered for this phone, by package name. */
+  winner: string | null;
+  shownSteps: number | null;
+  shownApp: string | null;
+  /** Whether Health Connect was read at all, and why not when it was not. */
+  sourcesStatus: string | null;
+  sources: {
+    packageName: string;
+    appName: string;
+    kind: string;
+    isWearable: boolean;
+    steps: number;
+    countable: number | null;
+    manualSteps: number | null;
+    status: string;
+  }[];
+}
+
 export interface StepDay {
   localDay: string;
   steps: number;
@@ -799,7 +855,15 @@ export interface StepDay {
   activeMinutes: number;
   calories: number;
   workouts: number;
+  /** `device` or `health_connect`: whether the phone's own counter answered. */
   source: string | null;
+  /** The app or counter the day's figure came from; null on a day never scored. */
+  sourceApp: StepSource | null;
+  /** Every source any phone saw that day, the answering one first. */
+  sources: StepSource[];
+  /** Several phones' minutes added up to the day, so their own counters are its source. */
+  phonesAdded: boolean;
+  bestDeviceId: string | null;
   verified: boolean;
   plausibility: number | null;
   layers: Record<string, number | null> | null;
@@ -809,14 +873,42 @@ export interface StepDay {
   stepsCredited: number;
   goalHit: boolean;
   scoredAt: string | null;
-  devices: {
-    deviceId?: unknown;
-    source?: unknown;
-    candidate?: unknown;
-    verified?: unknown;
-    verifiedSteps?: unknown;
-    plausibility?: unknown;
-  }[];
+  devices: StepDayDevice[];
+}
+
+/** One source across the whole window: what it answered for, and what it only wrote. */
+export interface StepSourceTotal {
+  key: string;
+  appName: string;
+  kind: string;
+  isWearable: boolean;
+  isPlatform: boolean;
+  /** The days' figures this source answered for. */
+  steps: number;
+  verifiedSteps: number;
+  /** Everything it wrote, the days it was not believed included. */
+  wrote: number;
+  days: number;
+  daysAnswered: number;
+  lastDay: string | null;
+  lastStatus: string;
+}
+
+/** The newest day with steps, and where it came from. */
+export interface LastSteps {
+  localDay: string;
+  steps: number;
+  verifiedSteps: number;
+  verified: boolean;
+  source: string | null;
+  app: StepSource | null;
+  phonesAdded: boolean;
+  deviceId: string | null;
+  deviceName: string | null;
+  scoredAt: string | null;
+  /** When the phone last sent that day, which is not when it was walked. */
+  syncedAt: string | null;
+  appVersion: string | null;
 }
 
 export interface MemberSteps {
@@ -837,6 +929,9 @@ export interface MemberSteps {
     averageSteps: number;
   };
   streak: { current: number; longest: number } | null;
+  /** Which source the window's steps came from, most steps first. */
+  bySource: StepSourceTotal[];
+  last: LastSteps | null;
   byDay: StepDay[];
   data: StepDay[];
 }
@@ -1855,6 +1950,13 @@ export type TimelineDevice = {
   deviceId: string;
   name: string;
   deviceSteps: number;
+  /** Whether this phone's own counter answered for the day, or a Health Connect app did. */
+  source: string | null;
+  winnerApp: string | null;
+  shownApp: string | null;
+  shownSteps: number | null;
+  sourcesStatus: string | null;
+  sources: StepDayDevice['sources'];
   countedSteps: number;
   rejectedSteps: number;
   minutesClaimed: number;
@@ -1893,6 +1995,29 @@ export type StepsTimeline = {
     devices: number;
     rejectedDevices: number;
   };
+  /** The day as it was scored, and the source its figure came from; null when nothing scored it. */
+  scored: {
+    steps: number;
+    verifiedSteps: number;
+    verified: boolean;
+    source: string | null;
+    answeredBy: StepSource | null;
+    phonesAdded: boolean;
+    scoredAt: string | null;
+  } | null;
+  /**
+   * Every source the day saw, with its own twenty-four hours. The phone
+   * counter's hours are the minutes below; an app's are the hours its own
+   * tracker computed, and `null` where it computed none — which is not the
+   * same as none walked.
+   */
+  sources: (StepSource & { hourly: number[] | null })[];
+  /** The same sources hour by hour, midnight first. */
+  sourceHours: {
+    hour: number;
+    steps: number;
+    bySource: { key: string; appName: string; answered: boolean; steps: number }[];
+  }[];
   devices: TimelineDevice[];
   withoutMinutes: string[];
   hours: {

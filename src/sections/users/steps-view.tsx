@@ -5,10 +5,13 @@ import Typography from '@mui/material/Typography';
 
 import { ColumnChart } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
-import { DataTable, DaysFilter, FilterBar, Panel, Stat } from '@/src/components/ui';
+import { DataTable, DaysFilter, FilterBar, Kv, Panel, Stat, TextLink } from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
-import { date as formatDate, humanise, number, percent } from '@/src/lib/format';
+import { paths } from '@/src/layout/paths';
+import { ago, date as formatDate, dateTime, humanise, number, percent } from '@/src/lib/format';
 import type { MemberSteps } from '@/src/lib/types';
+
+import { SourceChips, SourceName, statusOf } from './step-sources';
 
 /**
  * What this member has walked, day by day (RULES A3, A20).
@@ -21,7 +24,7 @@ import type { MemberSteps } from '@/src/lib/types';
  */
 export async function MemberStepsView({ userId, days }: { userId: string; days: number }) {
   const report = await adminGet<MemberSteps>(`/admin/users/${encodeURIComponent(userId)}/steps`, { days });
-  const { window, goal, totals, streak, byDay, data } = report;
+  const { window, goal, totals, streak, bySource, last, byDay, data } = report;
 
   const chart = byDay.map(day => ({
     date: day.localDay,
@@ -98,9 +101,105 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
         />
       </Panel>
 
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Panel
+            title="Where the steps came from"
+            subtitle="Every source any of their phones saw in this window"
+            note="A day's figure is credited to the one source that answered for it — the scoring never splits a day between two — and `wrote` is everything that source recorded, the days it was not believed included. A watch that recorded every day and was believed on three reads as 3 answered of 20."
+            dense
+          >
+            <DataTable
+              columns={[
+                { label: 'Source' },
+                { label: 'Steps it answered for', align: 'right' },
+                { label: 'Days answered', align: 'right' },
+                { label: 'What it wrote', align: 'right' },
+                { label: 'Last seen' },
+              ]}
+              rows={bySource.map(source => ({
+                key: source.key,
+                cells: [
+                  <SourceName key="who" source={source} />,
+                  <Stack key="steps" spacing={0.25} sx={{ textAlign: 'right' }}>
+                    <Typography variant="subtitle2" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                      {number(source.steps)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                      {number(source.verifiedSteps)} verified
+                    </Typography>
+                  </Stack>,
+                  <Typography key="days" variant="body2" sx={{ textAlign: 'right' }}>
+                    {number(source.daysAnswered)} of {number(source.days)}
+                  </Typography>,
+                  <Typography key="wrote" variant="body2" sx={{ textAlign: 'right' }}>
+                    {number(source.wrote)}
+                  </Typography>,
+                  <Stack key="last" spacing={0.5}>
+                    <Typography variant="body2">{source.lastDay ? formatDate(source.lastDay) : '—'}</Typography>
+                    <Label color={statusOf(source.lastStatus).tone} variant="soft">
+                      {statusOf(source.lastStatus).label}
+                    </Label>
+                  </Stack>,
+                ],
+              }))}
+              empty="No day in this window was scored with a source behind it — either nothing has been synced, or these days were written before sources were kept."
+            />
+          </Panel>
+        </Grid>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Panel
+            title="The last steps, and what they came from"
+            subtitle={last ? `${formatDate(last.localDay)} · their newest day with steps on it` : undefined}
+            note="Synced is when the phone last sent that day, which is not when it was walked: a day can arrive hours or days late."
+          >
+            {last === null ? (
+              <Typography variant="body2" sx={{ color: 'text.secondary', px: 3, py: 2 }}>
+                No day in this window carries a step.
+              </Typography>
+            ) : (
+              <Stack spacing={1.5} sx={{ px: 3, py: 2 }}>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Typography variant="h6">{last.app ? last.app.appName : 'Not recorded'}</Typography>
+                  {last.app && <SourceChips source={last.app} />}
+                  <Label color={last.verified ? 'success' : 'error'} variant="soft">
+                    {last.verified ? 'verified' : 'refused'}
+                  </Label>
+                  {last.phonesAdded && (
+                    <Label color="secondary" variant="soft">
+                      phones added together
+                    </Label>
+                  )}
+                </Stack>
+                <Kv
+                  columns={2}
+                  items={[
+                    { label: 'Steps', value: `${number(last.steps)} · ${number(last.verifiedSteps)} verified` },
+                    { label: 'Read from', value: last.source ? humanise(last.source) : '—' },
+                    { label: 'Phone', value: last.deviceName ?? '—' },
+                    { label: 'App version', value: last.appVersion ?? '—' },
+                    {
+                      label: 'Synced',
+                      value: last.syncedAt ? `${dateTime(last.syncedAt)} · ${ago(last.syncedAt)}` : 'no upload kept',
+                    },
+                    { label: 'Scored', value: last.scoredAt ? ago(last.scoredAt) : 'never scored' },
+                  ]}
+                />
+                {last.app === null && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    This day was written without a source behind it — a day scored before sources were kept, or one
+                    written by hand.
+                  </Typography>
+                )}
+              </Stack>
+            )}
+          </Panel>
+        </Grid>
+      </Grid>
+
       <Panel
         title="Day by day"
-        subtitle="Newest first, with what judged each one"
+        subtitle="Newest first, with the source it came from and what judged it — a day's date opens its own hours"
         note="`Credited` is the high-water mark: steps already paid or held for that day, which is why re-scoring a day never pays twice. Layer scores are 0–100 as they were when the day was scored."
         dense
       >
@@ -111,7 +210,7 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
             { label: 'Verified', align: 'right' },
             { label: 'Credited', align: 'right' },
             { label: 'Distance · minutes', align: 'right' },
-            { label: 'Source' },
+            { label: 'Step source' },
             { label: 'Judged' },
           ]}
           rows={data.map(day => ({
@@ -119,7 +218,9 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
             tone: day.verified ? 'default' : 'danger',
             cells: [
               <Stack key="day" spacing={0.25}>
-                <Typography variant="subtitle2">{formatDate(day.localDay)}</Typography>
+                <TextLink href={`${paths.dashboard.users.timeline(userId)}?date=${day.localDay}`} variant="subtitle2">
+                  {formatDate(day.localDay)}
+                </TextLink>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
                   <Label color={day.verified ? 'success' : 'error'} variant="soft">
                     {day.verified ? 'verified' : 'refused'}
@@ -151,11 +252,27 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
                   {number(day.activeMinutes)} min · {number(day.calories)} kcal
                 </Typography>
               </Stack>,
-              <Stack key="source" spacing={0.25}>
-                <Typography variant="body2">{day.source ? humanise(day.source) : '—'}</Typography>
+              <Stack key="source" spacing={0.5} sx={{ maxWidth: 240 }}>
+                <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Typography variant="body2">{day.sourceApp ? day.sourceApp.appName : '—'}</Typography>
+                  {day.sourceApp && <SourceChips source={day.sourceApp} />}
+                  {day.phonesAdded && (
+                    <Label color="secondary" variant="soft">
+                      phones added
+                    </Label>
+                  )}
+                </Stack>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {number(day.deviceCount)} phone(s)
+                  {day.source ? humanise(day.source) : 'not scored'} · {number(day.deviceCount)} phone(s)
                 </Typography>
+                {day.sources.filter(source => !source.answered && source.key !== 'phone').length > 0 && (
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {day.sources
+                      .filter(source => !source.answered && source.key !== 'phone')
+                      .map(source => `${source.appName} ${number(source.steps)} (${statusOf(source.status).label})`)
+                      .join(' · ')}
+                  </Typography>
+                )}
               </Stack>,
               <Stack key="judged" spacing={0.5} sx={{ maxWidth: 260 }}>
                 {day.plausibility !== null && (

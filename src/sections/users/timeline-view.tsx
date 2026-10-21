@@ -5,9 +5,10 @@ import Typography from '@mui/material/Typography';
 import { Label } from '@/src/components/label';
 import { ApiErrorNotice, DataTable, Mono, OffsetPager, Panel, Stat, type Row } from '@/src/components/ui';
 import { adminTry } from '@/src/lib/api';
-import { number } from '@/src/lib/format';
-import type { StepsTimeline, TimelineClaim } from '@/src/lib/types';
+import { humanise, number } from '@/src/lib/format';
+import type { StepsTimeline, TimelineClaim, TimelineDevice } from '@/src/lib/types';
 
+import { readStatus, SourceChips, SourceName, sourceFigures, statusOf } from './step-sources';
 import { TimelineFilters, TimelineRejectForm } from './timeline-controls';
 
 /**
@@ -27,6 +28,13 @@ import { TimelineFilters, TimelineRejectForm } from './timeline-controls';
  * a round trip per page for no gain. `?overlaps=only` is the filter that
  * matters — it leaves just the minutes more than one phone claimed, which on
  * a member with several installs is the handful worth reading.
+ *
+ * The minutes answer *which phone*; the panels above them answer *which
+ * source* (D-51). They are deliberately not one table: a minute belongs to a
+ * handset's own sensor, while an app that writes to Health Connect gives the
+ * day records and, at best, its own hours — so an app's steps can be placed
+ * in an hour and never in a minute, and a table that mixed the two would be
+ * inventing a precision the evidence does not have.
  */
 export async function MemberTimelineView({
   userId,
@@ -56,7 +64,8 @@ export async function MemberTimelineView({
     );
   }
 
-  const { totals, devices, hours, runs, rows, withoutMinutes, timezone, localDay } = answer.data;
+  const { totals, devices, hours, runs, rows, withoutMinutes, timezone, localDay, scored, sources, sourceHours } =
+    answer.data;
   const page = rows.slice(offset, offset + limit);
 
   // A colour per phone, so the hour strip, the rows and the legend all read
@@ -85,6 +94,23 @@ export async function MemberTimelineView({
     ],
   }));
 
+  /**
+   * Which source answered on one phone: the Health Connect app that won, else
+   * the app the phone was showing, else the phone's own counter. Named by the
+   * app's own name where the phone reported one, because a package name is
+   * not what a member reads in their Health Connect settings.
+   */
+  const sourceOf = (device: TimelineDevice) => {
+    const picked = device.winnerApp ?? device.shownApp;
+    if (!picked) return { appName: 'Phone step counter', isWearable: false, shown: false };
+    const app = device.sources.find(source => source.packageName === picked);
+    return {
+      appName: app?.appName ?? picked,
+      isWearable: app?.isWearable ?? false,
+      shown: device.winnerApp === null,
+    };
+  };
+
   const deviceRows: Row[] = devices.map(device => ({
     key: device.deviceId,
     tone: device.rejected ? 'danger' : 'default',
@@ -98,6 +124,15 @@ export async function MemberTimelineView({
         <Mono>{device.deviceId}</Mono>
       </Stack>,
       number(device.deviceSteps),
+      <Stack key="source" spacing={0.25}>
+        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
+          <Typography variant="body2">{sourceOf(device).appName}</Typography>
+          <SourceChips source={sourceOf(device)} />
+        </Stack>
+        <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+          {device.source ? humanise(device.source) : 'not scored'} · {readStatus(device.sourcesStatus)}
+        </Typography>
+      </Stack>,
       number(device.countedSteps),
       device.rejectedSteps > 0 ? number(device.rejectedSteps) : '—',
       number(device.minutesClaimed),
@@ -225,6 +260,46 @@ export async function MemberTimelineView({
       </Grid>
 
       <Panel
+        title="The sources behind this day"
+        subtitle={
+          scored
+            ? scored.answeredBy
+              ? `The day's ${number(scored.steps)} came from ${scored.answeredBy.appName}${scored.phonesAdded ? ', the phones added minute by minute' : ''}`
+              : `The day's ${number(scored.steps)} was written without a source behind it`
+            : 'Nothing has scored this day yet, so these are the phones’ own minutes'
+        }
+        note="`Written` is everything a source recorded for the day; `countable` is what the rules let count, and the two differ where steps were typed in or arrived with no recording method. Only one source answers for a day — the scoring never splits a day between two."
+        dense
+      >
+        <DataTable
+          columns={[
+            { label: 'Source' },
+            { label: 'What it recorded' },
+            { label: 'What became of it' },
+            { label: 'Its own hours' },
+          ]}
+          rows={sources.map(source => ({
+            key: source.key,
+            cells: [
+              <SourceName key="who" source={source} />,
+              sourceFigures(source),
+              <Label key="status" color={statusOf(source.status).tone} variant="soft">
+                {statusOf(source.status).label}
+              </Label>,
+              source.hourly === null ? (
+                <Typography key="hours" variant="caption" sx={{ color: 'text.disabled' }}>
+                  none kept — it cannot be placed in time
+                </Typography>
+              ) : (
+                `${number(source.hourly.filter(steps => steps > 0).length)} hour(s) with steps`
+              ),
+            ],
+          }))}
+          empty="No source is stored for this day."
+        />
+      </Panel>
+
+      <Panel
         title="The phones, and which one the day counts"
         subtitle="Leaving a phone out re-scores the day without it. A day always keeps at least one, so the one it should count is the one left unticked."
       >
@@ -232,6 +307,7 @@ export async function MemberTimelineView({
           columns={[
             { label: 'Phone' },
             { label: 'Its own count', align: 'right' },
+            { label: 'Step source' },
             { label: 'Counted', align: 'right' },
             { label: 'Dropped', align: 'right' },
             { label: 'Minutes', align: 'right' },
@@ -276,6 +352,33 @@ export async function MemberTimelineView({
           ]}
           rows={hourRows}
           empty="No minute of this day carried steps."
+        />
+      </Panel>
+
+      <Panel
+        title="Hour by hour, source by source"
+        subtitle="When each source says the steps were taken"
+        note="The phone counter's hours are the minutes above — the union the day is decided from. An app's are the hours its own tracker computed, taken as the largest any phone reported rather than added, because two phones read the same Health Connect records. A source that computed no hours is in the panel above and absent here."
+      >
+        <DataTable
+          columns={[{ label: 'Hour' }, { label: 'From the minutes', align: 'right' }, { label: 'What each source says' }]}
+          rows={sourceHours
+            .filter(hour => hour.steps > 0 || hour.bySource.length > 0)
+            .map(hour => ({
+              key: `source-${hour.hour}`,
+              cells: [
+                `${String(hour.hour).padStart(2, '0')}:00`,
+                hour.steps > 0 ? number(hour.steps) : '—',
+                <Stack key="who" direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                  {hour.bySource.map(source => (
+                    <Label key={source.key} color={source.answered ? 'success' : 'default'} variant="soft">
+                      {source.appName} {number(source.steps)}
+                    </Label>
+                  ))}
+                </Stack>,
+              ],
+            }))}
+          empty="No source places a step in any hour of this day."
         />
       </Panel>
 

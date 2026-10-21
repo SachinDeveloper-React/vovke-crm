@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+html {
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+body,
+#root,
+#root__layout {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+img {
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+input[type='number']::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+input[type='number']::-webkit-inner-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.dynamicPaymentText span {
+  text-wrap: wrap;
+  word-break: break-all;
+}
+.toSelectOption input{
+padding: 10px 0 !important;
+}
+.toSelectOption label{
+  top: 7px;
+}
+.autoComItemWrapper{
+  width: 100%;
+  max-width: calc((100%/3) - (32px/3));
+}
+.textFieldAutoCom .MuiInputBase-root{
+padding-top: 14.5px !important;
+padding-bottom: 14.5px !important;
+}

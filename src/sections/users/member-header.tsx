@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
 import { Label } from '@/src/components/label';
-import { LinkButton, Mono, TrustChip } from '@/src/components/ui';
+import { LinkButton, Mono, SectionGuide, TrustChip } from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, coins, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
@@ -89,6 +89,13 @@ export async function MemberHeader({ params }: { params: Promise<{ userId: strin
       </Card>
 
       <MemberTabs userId={account.id} />
+
+      {/*
+        Under the tabs, where `PageHeader` puts it on every other page: a
+        member tab has no title block of its own, and the guide for the tab
+        being read belongs above its figures rather than above the account.
+      */}
+      <SectionGuide />
     </Box>
   );
 }

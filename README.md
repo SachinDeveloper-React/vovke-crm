@@ -28,8 +28,16 @@ sign-in page; that fallback is ignored in production builds.
 
 ## What each page answers
 
+Every page says so itself, too. The guide at the top of each one — what it
+is, how it is used, what can be changed from it, and what it refuses — comes
+from `src/layout/section-guides.ts`, and **Guide** in the sidebar is the same
+text end to end, searchable, for somebody opening this panel for the first
+time or coming to it from a different CRM. It is read-only, needs no API, and
+each page is matched by route, so a page gets its guide without being edited.
+
 | Page | The question it answers |
 |---|---|
+| **Guide** | What is all this, and what happens if I press it? Every page below in the sidebar's own order, with the writes each one has and the refusals each one enforces. The same text each page carries at its own top, where it can be hidden once it has been read. |
 | **Analytics** | Did it grow, is it being used, what did members walk, and what did it cost? Members, installs, active accounts, steps and their verified share, coins in and out, orders, flags — over a window you pick, bucketed in your own timezone. |
 | **Diagnose** | What should we fix next? Every install asked the same questions as one member: who has gone quiet, whose counter the OS killed, which OEM, which build, and the faults themselves worst first. |
 | **Members** | Who is this, what have they done, and what is wrong for them? Search by id, email, phone or part of a name, narrow by state (frozen, unverified, deleting, deleted), trust tier, platform and sort, then **twelve tabs** on one account. |
@@ -132,6 +140,14 @@ uses, and the answer after sending says where it went.
   build error, and streaming is what keeps navigation instant.
 - **Filters live in the URL**, never in local state, so every view is a link
   you can send to whoever has to act on it.
+- **The on-page guide hangs off `PageHeader`**, not off each page.
+  `components/ui/section-guide.tsx` reads the route and looks the entry up in
+  `layout/section-guides.ts`, so the forty-odd pages that render a title block
+  all carry one and none of them had to be touched; the member tabs have no
+  title block and render it from `sections/users/member-header.tsx` instead.
+  It is open the first time and remembered collapsed after that, in
+  `localStorage` under one key — and the body renders only after mount,
+  because what was collapsed is in the browser and the server cannot know it.
 - **The steps config is one spec, not nine forms.** `src/sections/steps/fields.ts`
   mirrors the API's closed list of writable keys; one client form renders any
   group of it and sends a patch of *only* what was touched, so two operators

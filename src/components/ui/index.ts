@@ -7,6 +7,7 @@ export { LinkButton, TextLink } from './nav';
 export { PageHeader } from './page-header';
 export { Panel } from './panel';
 export { RowLink } from './row-link';
+export { SectionGuide } from './section-guide';
 export { PageSkeleton, PanelSkeleton, StatRowSkeleton } from './skeletons';
 export { Stat } from './stat';
 export { DataTable, type Column, type Row } from './table';

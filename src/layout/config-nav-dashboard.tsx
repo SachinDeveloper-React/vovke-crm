@@ -6,8 +6,26 @@ import { NavGroupData } from '../components/nav-section/types';
  * The sidebar, in the order the questions get asked: what is happening, what
  * is broken, who is this, and who is cheating — then the two decisions an
  * operator makes rather than reads.
+ *
+ * The Guide sits above all of it, because the one reader the rest of this
+ * order does not serve is somebody opening the panel for the first time: the
+ * captions here say where a page is, and the guide says what happens if you
+ * press the thing. Every page carries the same text at the top of itself
+ * (`layout/section-guides.ts`), so the entry is a way to read it all at once
+ * rather than the only place it exists.
  */
 export const navData: NavGroupData[] = [
+  {
+    subheader: 'Start here',
+    items: [
+      {
+        title: 'Guide',
+        path: paths.dashboard.guide,
+        icon: <Iconify icon="solar:notebook-bookmark-bold-duotone" />,
+        caption: 'What every page is for, end to end',
+      },
+    ],
+  },
   {
     subheader: 'Watch',
     items: [

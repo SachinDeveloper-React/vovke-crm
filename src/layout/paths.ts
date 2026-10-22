@@ -17,6 +17,8 @@ export const paths = {
 
   dashboard: {
     root: ROOTS.DASHBOARD,
+    /** What every page of this panel is for, end to end (`section-guides.ts`). */
+    guide: `${ROOTS.DASHBOARD}/guide`,
     /** Growth, use, steps, coins, orders. */
     analytics: `${ROOTS.DASHBOARD}/analytics`,
     /** The fleet's faults, worst first — the list of what to fix next. */

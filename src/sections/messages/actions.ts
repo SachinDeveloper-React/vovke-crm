@@ -39,6 +39,10 @@ export async function sendBroadcast(_previous: BroadcastState, form: FormData): 
   const result = await adminWrite<BroadcastResult>('POST', '/admin/notifications/broadcast', {
     segment,
     topic: text(form, 'topic') || 'system',
+    // Left out, the topic's own switch governs the push, as it does for
+    // every job. Named, it overrides — which is the only way `offers` ever
+    // silences anything, since no topic maps to it.
+    ...(text(form, 'preference') ? { preference: text(form, 'preference') } : {}),
     title,
     message,
     suppressPush: form.getAll('suppressPush').map(String).pop() === 'on',

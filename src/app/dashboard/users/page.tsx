@@ -29,6 +29,12 @@ async function Loader({ search }: { search: Promise<SearchParams> }) {
         tier: readEnum(params, 'tier', ['', 'trusted', 'normal', 'watch', 'restricted', 'banned'] as const, ''),
         platform: readEnum(params, 'platform', ['', 'ios', 'android'] as const, ''),
         status: readEnum(params, 'status', ['', 'frozen', 'deleted', 'unverified', 'deleting'] as const, ''),
+        silenced: readEnum(
+          params,
+          'silenced',
+          ['', 'activity', 'coins', 'challenges', 'orders', 'offers', 'announcements', 'referrals', 'health'] as const,
+          '',
+        ),
         sort: readEnum(params, 'sort', ['newest', 'oldest', 'name', 'trust'] as const, 'newest'),
       }}
     />

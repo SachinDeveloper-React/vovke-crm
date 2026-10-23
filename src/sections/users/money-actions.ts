@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { adminWrite } from '@/src/lib/api';
 import { coins as formatCoins } from '@/src/lib/format';
-import type { AdjustResult, GrantBadgeResult, MemberStatus } from '@/src/lib/types';
+import type { AdjustResult, GrantBadgeResult, MemberStatus, VerifyContactResult } from '@/src/lib/types';
 
 export type MoneyActionState = { ok?: string; error?: string };
 
@@ -83,6 +83,49 @@ export async function setStatus(_previous: MoneyActionState, form: FormData): Pr
   return {
     ok: `Saved. ${data.frozen ? 'Frozen — the account cannot spend.' : 'Not frozen.'} ${
       data.legalHold ? 'Legal hold on: the deletion job will leave it alone.' : 'No legal hold.'
+    }`,
+  };
+}
+
+/**
+ * Takes a contact detail as proven, for the member who cannot prove it.
+ *
+ * The case is the one with no other answer: the SMS never arrives, so
+ * `verify-otp` can never succeed and the member sits behind the verified-
+ * contacts gate for good. Support has established who they are by then —
+ * what is missing is the code, not the identity.
+ *
+ * It unlocks redeeming, payouts and addresses, so the number or address is
+ * typed back before it will go, and there is no route that undoes it.
+ */
+export async function verifyContact(
+  _previous: MoneyActionState,
+  form: FormData,
+): Promise<MoneyActionState> {
+  const userId = text(form, 'userId');
+  const channel = text(form, 'channel') === 'email' ? 'email' : 'phone';
+  const confirm = text(form, 'confirm');
+  const reason = text(form, 'reason');
+
+  if (confirm.length < 3) {
+    return { error: `Type the ${channel === 'phone' ? 'number' : 'address'} back to confirm it.` };
+  }
+  if (reason.length < 3) return { error: 'Say why it is being done by hand — it is kept on the audit row.' };
+
+  const result = await adminWrite<VerifyContactResult>(
+    'POST',
+    `/admin/users/${encodeURIComponent(userId)}/verify-contact`,
+    { channel, confirm, reason },
+  );
+  if (!result.ok) return { error: result.error };
+
+  revalidatePath(`/dashboard/users/${userId}`);
+  const { data } = result;
+  return {
+    ok: `Their ${channel === 'phone' ? 'number' : 'email address'} is verified, and they have been told.${
+      data.canRedeem
+        ? ' Both details are proven, so they can redeem and add an address now.'
+        : ` The other detail is still unproven, so redeeming stays shut until it is.`
     }`,
   };
 }

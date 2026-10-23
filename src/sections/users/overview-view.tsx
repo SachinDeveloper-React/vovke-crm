@@ -10,7 +10,7 @@ import { ago, coins, dateTime, deviceLabel, humanise, number, rupees } from '@/s
 import { paths } from '@/src/layout/paths';
 import type { AuditRow, Page, ProblemReport, UserOverview } from '@/src/lib/types';
 
-import { StatusForm } from './money-forms';
+import { StatusForm, VerifyContactForm } from './money-forms';
 
 /**
  * The account in full, in the order the questions get asked: who they are,
@@ -212,18 +212,35 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Panel
-            title="Account state"
-            subtitle="The two things an operator may change here"
-            note="Freezing stops the account spending and leaves everything else alone — the days, the badges and the history stay exactly as they are. Both switches need a reason, and both are kept in the audit log."
-          >
-            <StatusForm
-              userId={userId}
-              frozen={account.flags.frozen}
-              legalHold={account.flags.legalHold}
-              deleted={Boolean(account.deletedAt)}
-            />
-          </Panel>
+          <Stack spacing={3}>
+            <Panel
+              title="Account state"
+              subtitle="The two things an operator may change here"
+              note="Freezing stops the account spending and leaves everything else alone — the days, the badges and the history stay exactly as they are. Both switches need a reason, and both are kept in the audit log."
+            >
+              <StatusForm
+                userId={userId}
+                frozen={account.flags.frozen}
+                legalHold={account.flags.legalHold}
+                deleted={Boolean(account.deletedAt)}
+              />
+            </Panel>
+
+            <Panel
+              title="Verify a contact detail"
+              subtitle="For the member whose code never arrives"
+              note="Both details proven is what redeeming, payouts and addresses are gated on, so a member who cannot receive an SMS is stuck for good. This is the way out, and it is one-way: the value is typed back before it will go, and there is no route that undoes it."
+            >
+              <VerifyContactForm
+                userId={userId}
+                email={account.email}
+                phone={account.phone}
+                emailVerified={Boolean(account.emailVerifiedAt)}
+                phoneVerified={Boolean(account.phoneVerifiedAt)}
+                deleted={Boolean(account.deletedAt)}
+              />
+            </Panel>
+          </Stack>
         </Grid>
         <Grid size={{ xs: 12, lg: 7 }}>
           <Panel

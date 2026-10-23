@@ -17,9 +17,9 @@ import {
   Stat,
 } from '@/src/components/ui';
 import { adminGet, adminTry } from '@/src/lib/api';
-import { ago, compact, dateTime, number, percent } from '@/src/lib/format';
+import { ago, compact, dateTime, humanise, number, percent } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { Broadcasts, Notifications } from '@/src/lib/types';
+import type { Broadcasts, NotificationConsent, Notifications } from '@/src/lib/types';
 
 import { DeleteNotification, RetractBroadcast } from './notification-forms';
 
@@ -68,7 +68,7 @@ const CATEGORY_TONE: Record<string, 'info' | 'warning' | 'default'> = {
  * is the only path to a push — there is no bypass, including from here.
  */
 export async function NotificationsView({ query }: { query: NotificationsQuery }) {
-  const [feed, broadcasts] = await Promise.all([
+  const [feed, broadcasts, consent] = await Promise.all([
     adminGet<Notifications>('/admin/notifications', {
       q: query.q,
       topic: query.topic || undefined,
@@ -78,6 +78,7 @@ export async function NotificationsView({ query }: { query: NotificationsQuery }
       offset: query.offset,
     }),
     adminTry<Broadcasts>('/admin/notifications/broadcasts', { limit: 25 }),
+    adminTry<NotificationConsent>('/admin/notifications/consent'),
   ]);
   const { totals, byTopic, data } = feed;
 
@@ -187,6 +188,86 @@ export async function NotificationsView({ query }: { query: NotificationsQuery }
           </Panel>
         </Grid>
       </Grid>
+
+      {'data' in consent && (
+        <Panel
+          title="What members have agreed to hear"
+          subtitle={`${number(consent.data.members)} accounts · the switch decides whether a push is sent at all`}
+          note="A preferences row is written at sign-up, so a member sitting on the default has refused nothing — “chose it” is the figure that separates a decision from a default. Consent is only ever given in the app: it can be switched off from a member's own tab and never back on. Every switch still writes the feed row; only the push is withheld."
+          dense
+        >
+          <DataTable
+            columns={[
+              { label: 'Subject' },
+              { label: 'Sent on it' },
+              { label: 'Reaches', align: 'right' },
+              { label: 'Switched off', align: 'right' },
+              { label: 'Chose it', align: 'right' },
+            ]}
+            rows={consent.data.switches.map(row => ({
+              key: row.key,
+              cells: [
+                <Stack key="key" spacing={0.25}>
+                  <Typography variant="subtitle2">{humanise(row.key)}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    {row.defaultOn ? 'on by default' : 'off until asked for'}
+                  </Typography>
+                </Stack>,
+                row.governs.length > 0 ? (
+                  <Stack key="governs" direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+                    {row.governs.map(topic => (
+                      <Label key={topic} color="default" variant="soft">
+                        {topic}
+                      </Label>
+                    ))}
+                  </Stack>
+                ) : (
+                  // A switch no topic maps to silences nothing unless the
+                  // sender names it. Worth saying outright: a column of
+                  // refusals against it would otherwise read as lost reach.
+                  <Label key="governs" color="warning" variant="soft">
+                    only when a send names it
+                  </Label>
+                ),
+                <Typography key="on" variant="body2" sx={{ textAlign: 'right' }}>
+                  {number(row.on)}
+                </Typography>,
+                <Stack key="off" spacing={0.25} sx={{ textAlign: 'right' }}>
+                  <Typography variant="body2">{number(row.off)}</Typography>
+                  <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                    {percent(row.off / Math.max(1, consent.data.members), 0)}
+                  </Typography>
+                </Stack>,
+                <Stack key="chosen" spacing={0.5} sx={{ alignItems: 'flex-end' }}>
+                  <Typography variant="body2">{number(row.chosen)}</Typography>
+                  {row.chosen > 0 && (
+                    <LinkButton
+                      href={`${paths.dashboard.users.root}?silenced=${row.key}`}
+                      size="small"
+                      color="inherit"
+                      variant="outlined"
+                    >
+                      Who
+                    </LinkButton>
+                  )}
+                </Stack>,
+              ],
+            }))}
+            empty="No account has a preferences row yet."
+          />
+          <Stack direction="row" spacing={3} sx={{ px: 3, pt: 2, flexWrap: 'wrap', gap: 1 }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Quiet hours on: <strong>{number(consent.data.quietHours.on)}</strong>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Order texts on: <strong>{number(consent.data.channels.sms.on)}</strong>
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              Email on: <strong>{number(consent.data.channels.email.on)}</strong>
+            </Typography>
+          </Stack>
+        </Panel>
+      )}
 
       {'data' in broadcasts && broadcasts.data.data.length > 0 && (
         <Panel

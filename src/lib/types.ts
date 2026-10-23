@@ -1130,6 +1130,35 @@ export interface MemberStatus {
   deletion: { scheduledAt: string | null; purgeAt: string | null; reason: string | null };
 }
 
+/** `GET /admin/notifications/consent` — what the base has agreed to hear. */
+export interface NotificationConsent {
+  members: number;
+  /** Accounts with no preferences row at all: on every default by omission. */
+  noRow: number;
+  quietHours: { on: number; off: number };
+  channels: { sms: { on: number; off: number }; email: { on: number; off: number } };
+  switches: {
+    key: string;
+    defaultOn: boolean;
+    on: number;
+    off: number;
+    /** Members who moved it away from the value they were created with. */
+    chosen: number;
+    /** The topics sent on it. Empty means only a caller naming it. */
+    governs: string[];
+  }[];
+}
+
+/** `POST /admin/users/:id/verify-contact` — a detail proven by hand. */
+export interface VerifyContactResult {
+  channel: 'phone' | 'email';
+  emailVerifiedAt: string | null;
+  phoneVerifiedAt: string | null;
+  /** Both proven is what unlocks redeeming, payouts and addresses. */
+  canRedeem: boolean;
+  told: { status: string; push: string };
+}
+
 export interface AdjustResult {
   direction: 'credit' | 'clawback';
   amount: number;

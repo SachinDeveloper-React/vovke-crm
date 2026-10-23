@@ -27,6 +27,8 @@ export type UsersListQuery = {
   tier: string;
   platform: string;
   status: string;
+  /** One notification subject switched off — the consent report's drill-down. */
+  silenced: string;
   sort: string;
 };
 
@@ -48,6 +50,7 @@ export async function UsersListView({ query }: { query: UsersListQuery }) {
     tier: query.tier || undefined,
     platform: query.platform || undefined,
     status: query.status || undefined,
+    silenced: query.silenced || undefined,
     sort: query.sort,
   });
   const total = users.total ?? users.data.length;
@@ -89,6 +92,23 @@ export async function UsersListView({ query }: { query: UsersListQuery }) {
             { value: 'ios', label: 'iOS' },
           ]}
           width={130}
+        />
+        <SelectFilter
+          label="Silenced"
+          param="silenced"
+          value={query.silenced}
+          options={[
+            { value: '', label: 'Any consent' },
+            { value: 'activity', label: 'Activity off' },
+            { value: 'coins', label: 'Coins off' },
+            { value: 'challenges', label: 'Challenges off' },
+            { value: 'orders', label: 'Orders off' },
+            { value: 'offers', label: 'Offers off' },
+            { value: 'announcements', label: 'Announcements off' },
+            { value: 'referrals', label: 'Referrals off' },
+            { value: 'health', label: 'Health off' },
+          ]}
+          width={180}
         />
         <SelectFilter
           label="Sort"
@@ -194,7 +214,7 @@ export async function UsersListView({ query }: { query: UsersListQuery }) {
             ],
           }))}
           empty={
-            query.q || query.status || query.tier || query.platform
+            query.q || query.status || query.tier || query.platform || query.silenced
               ? 'Nothing matches those filters.'
               : 'No account has been created yet.'
           }
@@ -207,6 +227,8 @@ export async function UsersListView({ query }: { query: UsersListQuery }) {
           “Installed” is when this account first registered a phone, which is not the sign-up. “Last seen” is the
           newest request from any of their installs, written at most once every five minutes. Filtering by platform
           means “has a live install on it”, since a platform belongs to a phone rather than to an account.
+          “Silenced” is a subject the member switched off themselves — a row that still matches the default is not
+          in it, because nobody refused anything.
         </Typography>
       </Box>
     </Stack>

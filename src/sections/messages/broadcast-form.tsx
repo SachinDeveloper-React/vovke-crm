@@ -20,6 +20,18 @@ import { sendBroadcast, type BroadcastState } from './actions';
 
 const TOPICS = ['system', 'steps', 'coins', 'challenge', 'reward', 'health', 'hydration', 'streak', 'workout'] as const;
 
+/** The member's own eight consent switches, as their settings screen lists them. */
+const SWITCHES = [
+  'activity',
+  'coins',
+  'challenges',
+  'orders',
+  'offers',
+  'announcements',
+  'referrals',
+  'health',
+] as const;
+
 /**
  * The send itself.
  *
@@ -82,7 +94,34 @@ export function BroadcastForm({
             ))}
           </TextField>
         </Grid>
-        <Grid size={{ xs: 12, sm: 8 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          {/*
+            Which of the member's own eight switches decides whether this is
+            pushed. Left on "the topic decides" it behaves like every job.
+            It matters for a promotion: no topic maps to `offers`, so one
+            sent on `system` was governed by *announcements* and reached
+            members who had switched offers off — the switch was on their
+            screen and silenced nothing.
+          */}
+          <TextField
+            select
+            name="preference"
+            label="Governed by"
+            size="small"
+            fullWidth
+            defaultValue=""
+            disabled={pending}
+            helperText="Which switch can silence it"
+          >
+            <MenuItem value="">The topic decides</MenuItem>
+            {SWITCHES.map(key => (
+              <MenuItem key={key} value={key}>
+                {key}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <TextField name="title" label="Title" size="small" fullWidth required disabled={pending} slotProps={{ htmlInput: { maxLength: 120 } }} />
         </Grid>
         <Grid size={12}>

@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import { Iconify } from '@/src/components/iconify/iconify';
 import { coins as formatCoins } from '@/src/lib/format';
 
-import { adjustCoins, setStatus, type MoneyActionState } from './money-actions';
+import { adjustCoins, setStatus, verifyContact, type MoneyActionState } from './money-actions';
 
 /**
  * Credit or claw back coins.
@@ -145,6 +145,139 @@ export function AdjustCoinsForm({ userId, balance }: { userId: string; balance: 
           </Typography>
         </Stack>
       )}
+    </Stack>
+  );
+}
+
+/**
+ * Proves a phone number or an email address by hand.
+ *
+ * The ticket this answers is the one with no other path: the SMS does not
+ * arrive, so the member can never pass `verify-otp`, and both details proven
+ * is what redeeming, payouts and addresses are gated on. Support has already
+ * established who they are — what is missing is the code.
+ *
+ * It asks for the value typed back, which is the panel's rule for anything
+ * irreversible, and this is irreversible: there is no unverify. A detail
+ * already proven is refused by the API rather than re-stamped, so the form
+ * offers only what is still outstanding and says so when nothing is.
+ */
+export function VerifyContactForm({
+  userId,
+  email,
+  phone,
+  emailVerified,
+  phoneVerified,
+  deleted,
+}: {
+  userId: string;
+  email: string;
+  phone: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  deleted: boolean;
+}) {
+  const [state, action, pending] = useActionState<MoneyActionState, FormData>(verifyContact, {});
+  const outstanding = [
+    !phoneVerified && { channel: 'phone' as const, label: 'Mobile number', value: phone },
+    !emailVerified && { channel: 'email' as const, label: 'Email address', value: email },
+  ].filter((entry): entry is { channel: 'phone' | 'email'; label: string; value: string } => Boolean(entry));
+  const [channel, setChannel] = useState<'phone' | 'email'>(outstanding[0]?.channel ?? 'phone');
+
+  if (deleted) {
+    return (
+      <Alert severity="info" variant="outlined">
+        This account has been deleted and anonymised. There is nothing left to verify.
+      </Alert>
+    );
+  }
+
+  if (outstanding.length === 0) {
+    return (
+      <Alert severity="success" variant="outlined">
+        Both details are proven, so nothing here is gated on verification. There is no way to undo a
+        verification, which is why this does nothing once it is done.
+      </Alert>
+    );
+  }
+
+  const chosen = outstanding.find(entry => entry.channel === channel) ?? outstanding[0];
+
+  return (
+    <Stack component="form" action={action} spacing={2}>
+      <input type="hidden" name="userId" value={userId} />
+      {state.ok && (
+        <Alert severity="success" variant="outlined">
+          {state.ok}
+        </Alert>
+      )}
+      {state.error && (
+        <Alert severity="error" variant="outlined">
+          {state.error}
+        </Alert>
+      )}
+
+      <TextField
+        select
+        name="channel"
+        label="What to prove"
+        size="small"
+        fullWidth
+        value={chosen.channel}
+        onChange={event => setChannel(event.target.value === 'email' ? 'email' : 'phone')}
+        disabled={pending}
+      >
+        {outstanding.map(entry => (
+          <MenuItem key={entry.channel} value={entry.channel}>
+            {entry.label} — {entry.value}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      <TextField
+        name="confirm"
+        label={`Type the ${chosen.channel === 'phone' ? 'number' : 'address'} back`}
+        placeholder={chosen.value}
+        size="small"
+        fullWidth
+        required
+        disabled={pending}
+        helperText={
+          chosen.channel === 'phone'
+            ? 'Spacing and punctuation do not matter; the country code does.'
+            : 'Capitals do not matter.'
+        }
+        slotProps={{ htmlInput: { maxLength: 190 } }}
+      />
+
+      <TextField
+        name="reason"
+        label="Why by hand (required, kept on the audit row)"
+        placeholder="ticket 88 — no SMS delivered on their carrier"
+        size="small"
+        fullWidth
+        required
+        disabled={pending}
+        slotProps={{ htmlInput: { maxLength: 300 } }}
+      />
+
+      <Box>
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
+          loading={pending}
+          startIcon={<Iconify icon="solar:verified-check-bold-duotone" />}
+        >
+          Mark as verified
+        </Button>
+      </Box>
+
+      <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+        The member is told through their notification centre, because nothing else on their screen would
+        change. There is no route that undoes this — freezing the account is how a verification given in
+        error is answered.
+      </Typography>
     </Stack>
   );
 }

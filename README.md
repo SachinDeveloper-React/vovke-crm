@@ -56,8 +56,8 @@ each page is matched by route, so a page gets its guide without being edited.
 | **Baskets** | What nobody checked out — dearest or most recent first, at today's prices — and which of those **cannot** check out. Plus the demand report: saves and basket units beside stock, sorted by the wanting, which is the one thing sales figures cannot show. |
 | **Member → Basket & saved** | Their basket as stored *and* as they see it, with the quote from the same call their app makes — so the coupon and its problem text are the words on their screen. Take a line out, the code off, or the lot; unsave something; and see what they had before their basket dropped it. |
 | **Reviews** | What members wrote, worst first, because a one-star review is either a product problem to fix or a review to take down. Filter by rating, by whether they had bought it, or by item; taking one down recounts the item at once. |
-| **Messages** | Tell a segment something: pick the filters, read the count, then send. The count goes back with the send, so a segment that has moved is refused rather than messaged. |
-| **Notifications** | What the app has actually told everybody, and what became of each message: read, pushed, held by quiet hours, or feed-only because the member has that category switched off. Plus every broadcast with the open rate the send itself could not know — and a retraction that takes back the rows nobody has opened and says how many it could not touch. |
+| **Messages** | Tell a segment something: pick the filters, read the count, then send. The count goes back with the send, so a segment that has moved is refused rather than messaged. **Governed by** picks which of the member's own eight switches can silence it — left alone the topic decides, which is why a promotion has to name `offers`: no topic maps to it, so one sent on `system` was governed by *announcements* and reached everybody who had switched offers off. |
+| **Notifications** | What the app has actually told everybody, and what became of each message: read, pushed, held by quiet hours, or feed-only because the member has that category switched off. Plus every broadcast with the open rate the send itself could not know, a retraction that takes back the rows nobody has opened and says how many it could not touch — and the **consent report**: the base's eight switches counted, who a push on each one reaches, who switched it off, how many of those were decisions rather than defaults, and which switches anything is actually sent on. “Who” drills through to the members themselves. |
 | **Support** | Who is waiting for an answer, longest wait first. “Waiting on us” is read off the thread's last message, so it cannot disagree with the conversation; the subject breakdown doubles as the list of articles worth writing. |
 | **Support → one ticket** | The whole thread, the phone it was opened from (the first thing support asks and the last thing a member wants to type), their other tickets, and the reply — which tells them through the same path every job uses, and sets the state in the same write. |
 | **Help centre** | The articles members search and the guide they follow, written here and read by them with no app release. Names the shelves with nothing active on them, because a help-page row that opens an empty list is a tile leading nowhere. |
@@ -71,7 +71,8 @@ Almost everything about a member is read-only. The writes in the whole panel
 are: the verdict on a fraud flag, a re-score of one day, a release and the
 update policy, the step config, a member's step goal and timezone, silencing
 one of their notification categories, sending them a message, asking their
-phones to sync, freezing an account or putting a legal hold on it, a coin
+phones to sync, freezing an account or putting a legal hold on it, verifying a member's phone
+or email by hand, a coin
 credit or clawback, a badge granted by hand, the four order verbs (advance,
 cancel, refund, re-address), the shop's own CRUD — products (including a
 guarded hard delete), stock, subcategories, bulk recategorising, coupons,

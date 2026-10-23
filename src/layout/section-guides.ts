@@ -108,6 +108,7 @@ export const sectionGuides: SectionGuide[] = [
     how: [
       'Search with whatever support was given. A partial name works; an id, email or phone is exact and faster.',
       'Use the state filter to answer "why can they not sign in" before reading anything else — frozen, unverified and deleting each explain it on their own.',
+      'The Silenced filter lists the members who switched one notification subject off. It is the drill-down from the consent report on Notifications.',
       'Open the account, then pick the tab that matches the question. Overview first if you do not know yet; it links into the rest.',
       'Every filter is in the URL, so the list you are looking at is a link you can send to whoever has to act on it.',
     ],
@@ -115,6 +116,7 @@ export const sectionGuides: SectionGuide[] = [
     careful: [
       'Deleted accounts are still listed, because "they say they deleted it and still got an email" is a real question. Read the state column before concluding anything from a row.',
       'Trust tier is the server\'s verdict on an account, not a label anybody set by hand here.',
+      'Silenced lists a deliberate refusal, not a default: a preferences row is written at sign-up, so a member who never touched the screen is not in it.',
     ],
   },
   {
@@ -190,16 +192,18 @@ export const sectionGuides: SectionGuide[] = [
     title: 'Member → Overview',
     question: 'Who is this account, and what has been done to it?',
     what:
-      'The profile hub: the account in full, every phone it has been used on, the wallet and orders in a line each, and links into the thirteen tabs beside it. The two writes that belong to an account as a whole are here, and so is the audit receipt of everything ever done to it — by an operator or by the member.',
+      'The profile hub: the account in full, every phone it has been used on, the wallet and orders in a line each, and links into the thirteen tabs beside it. The writes that belong to an account as a whole are here, and so is the audit receipt of everything ever done to it — by an operator or by the member.',
     how: [
       'Read the state line first: frozen, unverified or deleting explains most "it is not working" tickets on its own.',
       'Use the one-line summaries to decide which tab to open rather than reading all fourteen.',
       'Scroll to the trail when somebody asks why something changed; it names who did it and when.',
       'Freeze or put a legal hold on the account only when the case calls for it, and leave a note saying why.',
+      'Verify a contact detail when the member cannot — the SMS does not arrive on their carrier, so they can never pass the code and redeeming stays shut.',
     ],
-    writes: ['Freeze the account', 'Place a legal hold'],
+    writes: ['Freeze the account', 'Place a legal hold', 'Verify their phone or email by hand'],
     careful: [
       'Almost everything about a member is read-only here on purpose. The writes that exist are listed above, and each is logged with your note.',
+      'Verifying a contact detail unlocks redeeming, payouts and addresses, and there is no route that undoes it. The value is typed back before it will go, and freezing the account is how a verification given in error is answered.',
       'The trail shows the member\'s own actions as well as ours, so a change with no operator beside it was theirs.',
     ],
   },
@@ -360,6 +364,7 @@ export const sectionGuides: SectionGuide[] = [
     writes: [],
     careful: [
       'An unknown or unreported permission is not a refusal. It is an install that has not answered yet, and guessing "no" would silence somebody who never said it.',
+      'Health Connect here is about steps and distance only. Every vital the member holds — heart rate, blood pressure, weight — is typed in by them; nothing reads those from a device.',
     ],
   },
   {
@@ -577,13 +582,14 @@ export const sectionGuides: SectionGuide[] = [
       'A broadcast. Pick the filters, read the count the filters produce, then write the words and send. The count goes back with the send, so a segment that has moved since you read it is refused rather than messaged.',
     how: [
       'Build the segment with the filters and read the count before writing anything.',
+      'Set Governed by to the switch a member should be able to silence this with. A promotion belongs to offers; left on "the topic decides" it would go out under announcements, which is not what anybody switched off.',
       'Write the message, then send. Nothing is scheduled and nothing is templated: a send is immediate and typed each time.',
       'Check the result afterwards on Notifications, which has the open rate the send itself could not know.',
     ],
     writes: ['Send a broadcast'],
     careful: [
       'A broadcast cannot be unsent. It can be retracted from Notifications, which takes back the rows nobody has opened and says how many it could not touch.',
-      'Members with that category switched off get a feed row, not a push. The count includes them; the ringing does not.',
+      'Members with that category switched off get a feed row, not a push. The count includes them; the ringing does not — the consent report on Notifications is where the difference is visible before you send.',
     ],
   },
 
@@ -697,8 +703,11 @@ export const sectionGuides: SectionGuide[] = [
     title: 'Notifications',
     question: 'What have we told everybody, and did it arrive?',
     what:
-      'Every message the app has sent and what became of each one: read, pushed, held by quiet hours, or feed-only because the member has that category switched off. Broadcasts are here too, with the open rate the send itself could not know.',
+      'Every message the app has sent and what became of each one: read, pushed, held by quiet hours, or feed-only because the member has that category switched off. Broadcasts are here too, with the open rate the send itself could not know — and the consent report, which is the base\'s eight switches counted: who a push on each one reaches, who turned it off, and how many of those were decisions rather than defaults.',
     how: [
+      'Read the consent panel before planning a send: it is the only honest answer to "how many people will this actually reach".',
+      'Follow "Who" on a switch to the members who silenced it; the Silenced filter on Members is the same list.',
+      'Check what a switch governs. One marked "only when a send names it" silences nothing unless the broadcast names it, which is what the Governed by field on Messages is for.',
       'Filter to the message in question and read its outcome column: delivered and read are different answers.',
       'Where it says feed-only, the member silenced that category — that is consent, not a fault.',
       'Retract a broadcast that should not have gone, and read how many rows it could not touch.',
@@ -708,6 +717,7 @@ export const sectionGuides: SectionGuide[] = [
     careful: [
       'A push already delivered cannot be unrung. Retracting takes back the rows nobody has opened and cancels a push quiet hours were still holding — the panel says which of the two it was.',
       'Quiet hours hold a push rather than dropping it: a message shown as deferred has not failed, it is waiting.',
+      '"Switched off" is a refusal the member made in the app. It can be set from their own tab and never unset — consent is theirs to give — so the report is a thing to plan around, not to change.',
     ],
   },
   {

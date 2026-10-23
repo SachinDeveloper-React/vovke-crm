@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
+    /**
+     * Keeps `next build` from stopping on a security advisory the way 16.4.0
+     * did: `next upgrade --agent=security` sets this as part of the upgrade
+     * it performs, so a future advisory is taken by the same tool rather
+     * than by a build that refuses halfway and has to be run twice.
+     */
+    agentUpgrade: "security",
     serverActions: {
       // The food library arrives as a spreadsheet, and a Server Action's
       // body is capped at 1 MB by default — a `.xlsx` with a few thousand

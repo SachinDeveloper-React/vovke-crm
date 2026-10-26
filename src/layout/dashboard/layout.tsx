@@ -4,6 +4,7 @@ import { LayoutSection } from '../core/layout-section';
 import DasboardNavVertical from '../core/dashboard-nav-vertical';
 import { Main } from './main';
 import { DashboardHeader } from '../core/dashboard-header';
+import { MobileNav } from '../components/mobile-nav';
 import { RightArea } from '../components/right-area';
 import { ADMIN_TIMEZONE, API_BASE } from '@/src/lib/api';
 
@@ -24,7 +25,9 @@ export function DashboardLayout({
         disableElevation={false}
         slots={{
           topArea: null,
-          leftArea: null,
+          // The only way to the sidebar below the layout's breakpoint, where
+          // the 300px column is hidden.
+          leftArea: <MobileNav layoutQuery={layoutQuery} />,
           rightArea: <RightArea apiBase={API_BASE} timezone={ADMIN_TIMEZONE} />,
           bottomArea: null,
         }}

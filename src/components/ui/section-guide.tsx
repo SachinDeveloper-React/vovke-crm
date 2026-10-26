@@ -8,7 +8,6 @@ import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
-import NoSsr from '@mui/material/NoSsr';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
@@ -19,75 +18,39 @@ import { paths } from '@/src/layout/paths';
 import { TextLink } from './nav';
 
 /**
- * Which sections the operator has collapsed. One key holding a list, rather
- * than a key per section: there are forty-odd of them, and a reader who hides
- * one does not want the browser's storage inspector to fill up.
- */
-const STORAGE_KEY = 'vokve-crm.guide.collapsed';
-
-function readCollapsed(): string[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === 'string') : [];
-  } catch {
-    // Private windows, blocked site data, a value somebody edited by hand:
-    // none of them is a reason for the guide not to render.
-    return [];
-  }
-}
-
-function writeCollapsed(patterns: string[]): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(patterns));
-  } catch {
-    // The guide still works for this visit; only the memory of it is lost.
-  }
-}
-
-/**
  * The guide for whichever page this is, above the page itself.
  *
  * Rendered from `PageHeader` and from the member frame rather than from each
  * page, so a page gets its guide by being at a route the registry knows —
  * `layout/section-guides.ts` is the only place to edit.
  *
- * Open the first time and remembered after that, which is the order of the
- * two readers it is for: somebody handed the panel today needs to be told
- * what a page does before they touch it, and somebody who has read it wants
- * the figures at the top of the screen.
+ * **Folded, always.** It used to open the first time and remember being
+ * hidden, which sounds considerate and is not: an operator who works here
+ * every day was handed a card to dismiss on every page they had not visited
+ * since, while the figures they came for sat below the fold. One line and a
+ * **Read** button is enough of an offer — somebody who wants the guide opens
+ * it, and somebody opening the panel for the first time has the whole thing
+ * in the sidebar.
  *
- * Client-only, behind `NoSsr`, for one reason: *whether it has been read* is
- * in the browser's own storage and the server cannot know it. Rendered on the
- * server it would always come back open, and a card that unfolds and then
- * folds itself shut on every navigation is worse than one that appears a
- * frame late. Inside the boundary the stored answer can simply be read as the
- * initial state, with no effect and nothing to reconcile.
+ * Which also means there is nothing in the browser's storage to read, so no
+ * `NoSsr` boundary and no card that unfolds and folds itself shut a frame
+ * later: the server renders it closed because closed is what it always is.
  */
 export function SectionGuide() {
   const guide = guideFor(usePathname());
   if (!guide) return null;
 
   return (
-    <NoSsr>
-      {/* Keyed, so moving between two guided pages re-reads the stored
-          answer for the new one instead of keeping the old one's. */}
-      <GuideCard key={guide.pattern} guide={guide} />
-    </NoSsr>
+    /* Keyed, so opening the guide on one page does not leave it open on the
+       next: the offer starts folded wherever it is made. */
+    <GuideCard key={guide.pattern} guide={guide} />
   );
 }
 
 function GuideCard({ guide }: { guide: Guide }) {
-  const [open, setOpen] = useState(() => !readCollapsed().includes(guide.pattern));
+  const [open, setOpen] = useState(false);
 
-  const toggle = useCallback(() => {
-    setOpen(current => {
-      const next = !current;
-      const collapsed = readCollapsed().filter(entry => entry !== guide.pattern);
-      writeCollapsed(next ? collapsed : [...collapsed, guide.pattern]);
-      return next;
-    });
-  }, [guide.pattern]);
+  const toggle = useCallback(() => setOpen(current => !current), []);
 
   return (
     <Card

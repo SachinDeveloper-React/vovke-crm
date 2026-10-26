@@ -1306,6 +1306,184 @@ export interface CatalogueItemResult {
   item: CatalogueItem;
 }
 
+/**
+ * `POST /admin/shop/items/import` — a spreadsheet's worth of products.
+ *
+ * No `data`: two thousand catalogue items with their stock and shelves is a
+ * response nobody reads. The counts, the skipped lines and the slugs
+ * written are what the panel shows.
+ */
+export interface ItemImportResult {
+  dryRun: boolean;
+  created: number;
+  updated: number;
+  /** Rows the sheet named twice; the last one wins. */
+  duplicates: number;
+  failed: { line: number | null; title: string; reason: string }[];
+  ids: string[];
+}
+
+// ─── GET /admin/leaderboard (RULES §L, D-89) ───────────────────────────────
+
+/** One rung of the prize ladder, as ⚙ `leaderboard.tiers` holds it. */
+export interface LeaderboardTierConfig {
+  fromRank: number;
+  toRank: number;
+  coins: number;
+  perks: string[];
+  /** The operator's own words. Absent, the server derives one from the ranks. */
+  label?: string;
+}
+
+export interface LeaderboardStep {
+  title: string;
+  detail: string;
+}
+
+/** The leaderboard section of the config, as the page's forms read it. */
+export interface LeaderboardConfig {
+  timezones: Record<string, string>;
+  countryNames: Record<string, string>;
+  score: { stepsPerPoint: number; perWorkout: number; perChallenge: number };
+  tiers: LeaderboardTierConfig[];
+  banner: { kicker: string; title: string; subtitle: string };
+  note: string;
+  howItWorks: LeaderboardStep[];
+  /** What a closed week tells the member, one line per outcome (D-90). */
+  outcomes: Record<'paid' | 'held' | 'skipped' | 'none', string>;
+  closeAfterHours: number;
+  boardSize: number;
+}
+
+/** What `GET /leaderboard/reward-tiers` answers the app with, for the preview. */
+export interface LeaderboardPreview {
+  scope: string;
+  tiers: { id: string; fromRank: number; toRank: number; label: string; coins: number; perks: string[] }[];
+  howItWorks: LeaderboardStep[];
+  note: string;
+  banner?: { kicker: string; title: string; subtitle: string };
+}
+
+export interface AdminLeaderboard {
+  /** Every board there is — a country with a zone of its own, plus the shop's. */
+  countries: string[];
+  country: string;
+  /** The country for people — "India". */
+  scope: string;
+  zone: string;
+  config: LeaderboardConfig;
+  /** The words exactly as the app will receive them for this country. */
+  preview: LeaderboardPreview;
+  period: {
+    id: string;
+    start: string;
+    end: string;
+    resetsAt: string;
+    closeAfterHours: number;
+    ranked: number;
+  };
+  /** False while step-derived rewards are switched off (⚙ `coins.steps.enabled`). */
+  payable: boolean;
+  totals: {
+    coinsPerWeek: number;
+    lastPaidRank: number;
+    paidPlacesFilled: number;
+    ranked: number;
+  };
+  standings: {
+    rank: number;
+    userId: string;
+    name: string;
+    /** As the app writes it — "Asha R." */
+    publicName: string;
+    score: number;
+    steps: number;
+    workouts: number;
+    challenges: number;
+    coins: number;
+    perks: string[];
+    tierLabel: string | null;
+    reachedAt: string | null;
+  }[];
+  lastClosed: {
+    id: string;
+    start: string;
+    end: string;
+    closedAt: string | null;
+    ranked: number;
+    coinsPaid: number;
+    /** Owed by the ladder but not credited — the step-rewards switch. */
+    coinsOwed: number;
+    excluded: number;
+    winners: {
+      rank: number;
+      userId: string;
+      /** The member's own name; the id is beside it, never instead of it. */
+      name: string;
+      /** As the app writes it on the board — "Asha R." */
+      publicName: string;
+      score: number;
+      coins: number;
+      granted: number;
+      perks: string[];
+      excluded: boolean;
+      paid: boolean;
+    }[];
+  } | null;
+}
+
+// ─── GET/POST/PUT/DELETE /admin/tips (BACKEND §6.15) ───────────────────────
+
+/** One line the app says in its own voice — a quote, or a tip with a heading. */
+export interface TipRow {
+  id: string;
+  topic: string;
+  /** Null for the quote cards, which are a line and nothing else. */
+  title: string | null;
+  text: string;
+  sort: number;
+  active: boolean;
+  /** True for the line that is on that screen today. Absent on a write. */
+  showingToday?: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface Tips {
+  total: number;
+  offset: number;
+  limit: number;
+  /** The places in the app a line can be written for. Closed — each is a card. */
+  topics: string[];
+  byTopic: {
+    topic: string;
+    lines: number;
+    active: number;
+    /** The id on that screen today, or null where the card is not drawn. */
+    todayId: string | null;
+  }[];
+  totals: {
+    lines: number;
+    active: number;
+    /** Topics with nothing live: a screen whose card is simply missing. */
+    silentTopics: string[];
+  };
+  data: TipRow[];
+  nextCursor: null;
+}
+
+export interface TipResult {
+  created?: boolean;
+  tip: TipRow;
+}
+
+export interface TipsAddResult {
+  added: number;
+  /** Lines the topic already held, word for word. */
+  skipped: number;
+  ids: string[];
+}
+
 // ─── Badges by hand, and broadcasts ────────────────────────────────────────
 
 export interface GrantBadgeResult {

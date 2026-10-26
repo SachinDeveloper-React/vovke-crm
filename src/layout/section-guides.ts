@@ -459,10 +459,18 @@ export const sectionGuides: SectionGuide[] = [
       'Retire an item to take it off the shelf. Everything that already holds it stays readable.',
       'Stock is edited here and is what the till checks at checkout.',
     ],
-    writes: ['List a product', 'Change price or stock', 'Change how it is bought', 'Retire or restore a product'],
+    writes: [
+      'List a product',
+      'Import a spreadsheet of products',
+      'Change price or stock',
+      'Change how it is bought',
+      'Retire or restore a product',
+    ],
     careful: [
       'Retiring and deleting are not the same thing. Retiring is reversible; deleting is refused outright for anything an order holds.',
       'A price change applies from now on. Orders already placed keep the price they were placed at.',
+      'An import matches products by slug — the ID column, or one made from the name — so the same sheet twice corrects the same products. Press “Check the sheet” first: it says what would change, line by line, and writes nothing.',
+      'Prices in a sheet are rupees. The shelf named in a row has to exist already, or the row is refused with the shelves that do.',
     ],
   },
   {
@@ -772,6 +780,46 @@ export const sectionGuides: SectionGuide[] = [
     careful: [
       'The four shelves are a zod enum the app validates against, like the shop\'s categories, so a fifth is an app release.',
       'The help page\'s own rows are edited as JSON on App config, not here.',
+    ],
+  },
+  {
+    pattern: '/dashboard/leaderboard',
+    group: 'System',
+    title: 'Leaderboard',
+    question: 'What does each place win, and who is winning it?',
+    what:
+      'The weekly country board: the prize ladder, every word the app says about it, what a point is worth, and who is standing in the paid places this week with what each would take if the week closed now. The last closed week is at the foot, with what it actually paid.',
+    how: [
+      'Read “What the app says” first: it is the server\'s own filling of the copy, so it is exactly what a member will read.',
+      'Edit the ladder a rung per line — places | label | coins | perks. It has to start at place 1 and each rung continue where the last ended.',
+      'The words take placeholders ({prizes}, {scope}, {stepsPerPoint}…) which the server fills in per reader.',
+      'Changing a score weight re-counts each member at their next rollup, so the board holds both for a few hours.',
+    ],
+    writes: ['Set the prize ladder', 'Write the banner, the note and How it works', 'Set the scoring and the week', 'Put any of it back to the shipped default'],
+    careful: [
+      'Two rungs over one place is refused, and so is a gap between them: the first would pay whichever rung came first, the second leaves a place winning nothing while the one below it does.',
+      'Prizes are step-derived, so nothing is credited while ⚙ coins.steps.enabled is off. The week still closes, the places are still frozen, and the member is still told — the coins simply do not move. The page says so at the top.',
+      'A closed week is frozen with the tiers that were in force at close. Changing the ladder never re-pays a week that has already been paid.',
+      'Leaderboard coins are exempt from the daily earning ceiling (RULES E8d): a weekly prize is a period reward, not daily earning.',
+    ],
+  },
+  {
+    pattern: '/dashboard/quotes',
+    group: 'System',
+    title: 'Quotes & tips',
+    question: 'What does the app say in its own voice?',
+    what:
+      'Every encouraging line in the app: the home screen\'s quote card, the tip under the water log, the note at the foot of the reminder plan, the advice on the two vital screens. One per screen per day, in rotation, and changing one reaches members without an app release.',
+    how: [
+      'Read the panel at the top first: it says which line each screen is showing today, because the rotation is a function of the day and nobody can work it out from a list.',
+      'Write one line at a time, or paste a list for one screen — one quote per row.',
+      'Order decides the rotation. Hide a line to take it out of it and keep it.',
+    ],
+    writes: ['Write or edit a line', 'Paste a list of lines', 'Hide one', 'Delete one'],
+    careful: [
+      'A screen with nothing in rotation draws no card at all. That is correct behaviour, and the page counts those screens so it is not a surprise.',
+      'The screens are a closed list: each one is a card built for it in the app, so a new place for a quote is an app release.',
+      'A heading is only drawn by the reminder and vital cards. On the quote cards the line is the whole thing.',
     ],
   },
   {

@@ -26,6 +26,27 @@ Then open the panel and paste the API's `ADMIN_API_KEY`. During local
 development you can set `VOKVE_ADMIN_API_KEY` in `.env` instead and skip the
 sign-in page; that fallback is ignored in production builds.
 
+## Spreadsheets
+
+Two pages take a file: **Catalogue** (products) and **Food library** (meals).
+Both work the same way, and both read `.xlsx` and `.csv`:
+
+1. **Download the example sheet** from the dialog — it is built from the same
+   column list the importer reads, so it is never out of step, and its second
+   tab says what every column means and what will be refused.
+2. **Check the sheet.** The panel maps the columns, validates every row and
+   asks the API what it *would* do. Nothing is written. Anything it cannot
+   read comes back by line number with the reason.
+3. **Import it.** Products are matched by slug (the ID column, or one made
+   from the name); foods by name. So the same sheet imported again corrects
+   what it created rather than adding a second copy of everything.
+
+Headers are matched loosely — case, spacing and punctuation do not matter,
+and “Selling price”, “Energy (kcal)” and “Fibre” all land where you would
+expect. Prices in a product sheet are **rupees**. `npm run examples` writes
+both example files to `../docs/examples` for sending to somebody who does not
+have the panel open.
+
 ## What each page answers
 
 Every page says so itself, too. The guide at the top of each one — what it
@@ -37,7 +58,7 @@ each page is matched by route, so a page gets its guide without being edited.
 
 | Page | The question it answers |
 |---|---|
-| **Guide** | What is all this, and what happens if I press it? Every page below in the sidebar's own order, with the writes each one has and the refusals each one enforces. The same text each page carries at its own top, where it can be hidden once it has been read. |
+| **Guide** | What is all this, and what happens if I press it? Every page below in the sidebar's own order, with the writes each one has and the refusals each one enforces. The same text each page carries at its own top — folded, behind a **Read** button, so it is an offer rather than something to dismiss on every page. |
 | **Analytics** | Did it grow, is it being used, what did members walk, and what did it cost? Members, installs, active accounts, steps and their verified share, coins in and out, orders, flags — over a window you pick, bucketed in your own timezone. |
 | **Diagnose** | What should we fix next? Every install asked the same questions as one member: who has gone quiet, whose counter the OS killed, which OEM, which build, and the faults themselves worst first. |
 | **Members** | Who is this, what have they done, and what is wrong for them? Search by id, email, phone or part of a name, narrow by state (frozen, unverified, deleting, deleted), trust tier, platform and sort, then **twelve tabs** on one account. |
@@ -48,7 +69,7 @@ each page is matched by route, so a page gets its guide without being edited.
 | **Member → Orders** | Order history with totals and a status filter, and one order in full on its own page: every line's coins/money split, the address as it was, the gateway's references, the order's own history, and the three things support does to an order. |
 | **Fraud queue** | Who has something to answer for? Flagged accounts worst first, with the coins a confirmation would void — and the two verdicts. |
 | **Orders** | What needs packing, what is stuck unpaid, what was put right. Filter by status and by **how it was paid** — coins, money, or both — then open one to move it along, cancel it, refund it, or fix the address somebody read out wrong. |
-| **Catalogue** | The shelf: list something, change a price, switch an item between **coins-only / money-only / coins+money**, set stock, retire it or put it back. Every name opens the product below. |
+| **Catalogue** | The shelf: list something, change a price, switch an item between **coins-only / money-only / coins+money**, set stock, retire it or put it back. Every name opens the product below. A whole price list goes in as a **spreadsheet** — checked line by line first, matched by slug so the same sheet twice corrects the same products, with an example sheet to download. |
 | **Catalogue → Product** | One product in full: every field it has (photos, colours, key facts, features, specifications), what it has sold in coins and in money, who is waiting for it, what members wrote about it with the delete beside each, and who changed it last. Two ways to end a product's life sit on this page and only one is reversible — retiring leaves every order that holds it readable; **deleting is refused outright for anything an order holds**, and the refusal says to retire it instead. |
 | **Categories** | What each of the four shelves is carrying — items, stock at selling price, units and goods sold, and what people *want* that is not an order yet — with every subcategory under it. The categories themselves are a zod enum the app validates against, so they are reported and not editable; the free text under them is renamed, merged and cleared across the items in bulk, and items are moved between shelves a hundred at a time. |
 | **Coupons** | Campaigns (RULES R16), and what each has actually given away — summed from the orders' own snapshots, not recomputed. Write one in rupees and percent, cap it, limit it per member and overall, open and close it on a date, switch it off, or delete one that never ran. `state` is the till's own verdict, so "switched off" never reads as "expired". |
@@ -61,6 +82,8 @@ each page is matched by route, so a page gets its guide without being edited.
 | **Support** | Who is waiting for an answer, longest wait first. “Waiting on us” is read off the thread's last message, so it cannot disagree with the conversation; the subject breakdown doubles as the list of articles worth writing. |
 | **Support → one ticket** | The whole thread, the phone it was opened from (the first thing support asks and the last thing a member wants to type), their other tickets, and the reply — which tells them through the same path every job uses, and sets the state in the same write. |
 | **Help centre** | The articles members search and the guide they follow, written here and read by them with no app release. Names the shelves with nothing active on them, because a help-page row that opens an empty list is a tile leading nowhere. |
+| **Leaderboard** | What does each place win, and who is winning it? The weekly country board in one page: the prize ladder (a rung per line), every word the app says about it — banner, note and How it works, with the placeholders the server fills in — what a point is worth, who is standing in the paid places right now with what each would take, and the last closed week with what it actually paid. Says out loud when prizes are being held because step rewards are switched off. |
+| **Quotes & tips** | Every line the app says in its own voice: the home screen's quote, the tip under the water log, the note on the reminder plan, the advice on the two vital screens. One per screen per day in rotation — so the page leads with **which line each screen is showing today**, counts the screens with nothing live (they draw no card at all), and takes a pasted list for one screen at a time. |
 | **App config** | Every other knob the server holds, section by section: what is in force, what the code ships, and the way back. One row per key, and the API refuses an unknown path, a value of the wrong kind, and anything the cross-field validator would reject — before it is written. |
 | **Steps config** | How is everyone's walking handled? Every knob the step pipeline has, grouped: what the phone is told to count, how long a day stays sendable and when the server chases it, the goal range, what makes a day verified, what the layers refuse, where steps may come from, the rate and the caps, the trust tiers, and where the diagnosis draws its lines. Each field sits next to the value the code ships, and a changed one can be put back. |
 | **Member → Config & messages** | What does all that mean for this member, and what have we told them? Their goal and timezone (both editable), the ceiling their trust tier puts on a day, each phone's reporting and reachability, their notification switches and quiet hours, the feed with what became of every push — plus the two buttons support needs: *ask their phones to sync now* and *tell them something*. |

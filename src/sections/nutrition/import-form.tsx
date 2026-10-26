@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -58,6 +59,15 @@ export function ImportFoodsForm() {
         “Energy (kcal)”, “Carbohydrates” and “Fibre” are understood, and units in the cell (“104 kcal”, “3.2 g”) are
         read as numbers. <b>.xlsx</b> and <b>.csv</b> both work.
       </Typography>
+
+      <Link
+        href="/api/example-sheets/meals"
+        underline="hover"
+        sx={{ typography: 'body2', display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <Iconify icon="solar:file-download-bold-duotone" width={18} />
+        Download the example sheet
+      </Link>
 
       <TextField
         name="file"

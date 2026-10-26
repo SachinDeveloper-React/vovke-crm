@@ -22,6 +22,7 @@ import { paths } from '@/src/layout/paths';
 import type { Catalogue, Categories } from '@/src/lib/types';
 
 import { AddCategoryButton } from './category-forms';
+import { ImportProductsButton } from './import-form';
 import { NewProductButton, QuickEdit } from './item-forms';
 
 export type CatalogueQuery = {
@@ -77,6 +78,7 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
           do far more often than it is opened to read a figure. */}
       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
         <NewProductButton shop={shop} shelves={shelves} />
+        <ImportProductsButton />
         <AddCategoryButton icons={categories.icons} />
         <LinkButton href={paths.dashboard.categories} size="small" color="inherit" variant="outlined">
           Shelves &amp; subcategories

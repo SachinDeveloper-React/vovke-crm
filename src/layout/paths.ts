@@ -87,6 +87,8 @@ export const paths = {
     dietPlan: (planId: string) => `${ROOTS.DASHBOARD}/diet-plans/${encodeURIComponent(planId)}` as const,
     /** Telling a segment something. */
     messages: `${ROOTS.DASHBOARD}/messages`,
+    /** The weekly board: the prize ladder and the words about it (RULES §L). */
+    leaderboard: `${ROOTS.DASHBOARD}/leaderboard`,
     /** Releases, and the line below which a build is refused (RULES DV12). */
     releases: `${ROOTS.DASHBOARD}/releases`,
     /** What the app has told everybody, and what became of it. */
@@ -96,6 +98,8 @@ export const paths = {
     ticket: (ticketId: string) => `${ROOTS.DASHBOARD}/support/${encodeURIComponent(ticketId)}` as const,
     /** The help centre's own articles and the app guide (RULES P12). */
     faq: `${ROOTS.DASHBOARD}/faq`,
+    /** The quotes and tips the app says in its own voice (BACKEND §6.15). */
+    quotes: `${ROOTS.DASHBOARD}/quotes`,
     /** Every other config key, section by section. */
     config: `${ROOTS.DASHBOARD}/config`,
   },

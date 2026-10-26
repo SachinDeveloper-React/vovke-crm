@@ -170,6 +170,18 @@ export const navData: NavGroupData[] = [
         caption: 'Articles and the app guide',
       },
       {
+        title: 'Leaderboard',
+        path: paths.dashboard.leaderboard,
+        icon: <Iconify icon="solar:cup-star-bold-duotone" />,
+        caption: 'The prize ladder and its words',
+      },
+      {
+        title: 'Quotes & tips',
+        path: paths.dashboard.quotes,
+        icon: <Iconify icon="solar:quote-up-square-bold-duotone" />,
+        caption: 'The lines each screen says',
+      },
+      {
         title: 'App config',
         path: paths.dashboard.config,
         icon: <Iconify icon="solar:tuning-square-bold-duotone" />,

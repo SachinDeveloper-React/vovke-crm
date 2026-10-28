@@ -1,7 +1,12 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
+
+import type { UserOverview } from './types';
+import { ADMIN_TIMEZONE } from './zone';
 
 /**
  * The one door to the Vokve API's operator surface (`/v1/admin/*`).
@@ -25,9 +30,12 @@ export const API_BASE = (process.env.VOKVE_API_URL ?? 'http://localhost:3000/v1'
 /**
  * The zone every date on the dashboard is bucketed in. Sent as
  * `X-Vokve-Timezone`, which is what the API's own request context reads, so a
- * "day" here is the day the operator is living in rather than UTC's (D-18).
+ * "day" here is the day the operator is living in rather than UTC's.
+ *
+ * Declared in `./zone` and re-exported here: this file is `server-only`, and
+ * the formatters need the same constant on both sides of that line.
  */
-export const ADMIN_TIMEZONE = process.env.VOKVE_ADMIN_TIMEZONE ?? 'Asia/Kolkata';
+export { ADMIN_TIMEZONE } from './zone';
 
 export class ApiError extends Error {
   constructor(
@@ -272,4 +280,30 @@ export async function verifyAdminKey(key: string): Promise<{ ok: true } | { ok: 
     }
     return { ok: false, reason: error.message };
   }
+}
+
+/**
+ * One member's overview, read once per request however many panels ask.
+ *
+ * The frame and the tab inside it both need the account — the frame for the
+ * name, the tab for the zone its timestamps are written in — and they render
+ * in the same pass, so `cache` is what keeps that one HTTP call rather than
+ * two.
+ */
+export const memberOverview = cache(
+  (userId: string): Promise<UserOverview> => adminGet<UserOverview>(`/admin/users/${encodeURIComponent(userId)}`),
+);
+
+/**
+ * The zone this member's own instants are written in: the one their phone
+ * last reported, falling back to the panel's.
+ *
+ * What happened on a member's phone happened on their clock, and a panel that
+ * writes it on the operator's is how a hold that clears at 6:44 pm gets read
+ * as 1:14 pm. Aggregates stay in `ADMIN_TIMEZONE` — days from two zones
+ * cannot be added up — so this is for a member's own timestamps only.
+ */
+export async function memberZone(userId: string): Promise<string> {
+  const { account } = await memberOverview(userId);
+  return account.timezone || ADMIN_TIMEZONE;
 }

@@ -5,9 +5,9 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { BoolChip, Kv, Mono, Panel, PermissionChip } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberOverview, memberZone } from '@/src/lib/api';
 import { ago, dateTime, deviceLabel, humanise, number } from '@/src/lib/format';
-import type { DevicePermissionRow, Page, UserOverview } from '@/src/lib/types';
+import type { DevicePermissionRow, Page } from '@/src/lib/types';
 
 /**
  * Every phone on the account, what it is, and what the OS lets it do.
@@ -17,8 +17,10 @@ import type { DevicePermissionRow, Page, UserOverview } from '@/src/lib/types';
  * behalf anyway. What it can do is say exactly which of them is the problem.
  */
 export async function MemberInstalls({ userId }: { userId: string }) {
+  const zone = await memberZone(userId);
+
   const [overview, permissions] = await Promise.all([
-    adminGet<UserOverview>(`/admin/users/${encodeURIComponent(userId)}`),
+    memberOverview(userId),
     adminGet<Page<DevicePermissionRow>>(`/admin/users/${encodeURIComponent(userId)}/permissions`),
   ]);
   const permissionOf = new Map(permissions.data.map(row => [row.deviceId, row]));
@@ -95,15 +97,15 @@ export async function MemberInstalls({ userId }: { userId: string }) {
                 </Typography>
                 <Kv
                   items={[
-                    { label: 'Installed', value: dateTime(install.installedAt), hint: ago(install.installedAt) },
-                    { label: 'Last active', value: dateTime(install.lastActiveAt), hint: ago(install.lastActiveAt) },
+                    { label: 'Installed', value: dateTime(install.installedAt, zone), hint: ago(install.installedAt) },
+                    { label: 'Last active', value: dateTime(install.lastActiveAt, zone), hint: ago(install.lastActiveAt) },
                     { label: 'First build', value: install.app.firstVersion ?? '—' },
                     { label: 'Bundle', value: install.app.bundleId ?? '—' },
                     { label: 'Sign-ins', value: number(install.logins) },
-                    { label: 'Signed in since', value: install.signedInAt ? dateTime(install.signedInAt) : '—' },
-                    { label: 'Last signed out', value: install.lastSignedOutAt ? dateTime(install.lastSignedOutAt) : '—' },
-                    { label: 'Session expires', value: install.session.expiresAt ? dateTime(install.session.expiresAt) : '—', hint: install.session.live ? `${number(install.session.tokens)} live token(s)` : 'no live token' },
-                    { label: 'Revoked', value: install.revokedAt ? dateTime(install.revokedAt) : 'no' },
+                    { label: 'Signed in since', value: install.signedInAt ? dateTime(install.signedInAt, zone) : '—' },
+                    { label: 'Last signed out', value: install.lastSignedOutAt ? dateTime(install.lastSignedOutAt, zone) : '—' },
+                    { label: 'Session expires', value: install.session.expiresAt ? dateTime(install.session.expiresAt, zone) : '—', hint: install.session.live ? `${number(install.session.tokens)} live token(s)` : 'no live token' },
+                    { label: 'Revoked', value: install.revokedAt ? dateTime(install.revokedAt, zone) : 'no' },
                     { label: 'Push token', value: <BoolChip value={install.push.hasToken} yes="on file" no="none" />, hint: install.push.updatedAt ? `updated ${ago(install.push.updatedAt)}` : undefined },
                     { label: 'Reminders scheduled', value: install.remindersScheduledAt ? ago(install.remindersScheduledAt) : 'not claimed' },
                   ]}
@@ -174,7 +176,7 @@ export async function MemberInstalls({ userId }: { userId: string }) {
                     <Stack spacing={0.5}>
                       {allowed.history.slice(0, 8).map((change, index) => (
                         <Typography key={`${change.key}-${change.at}-${index}`} variant="caption" sx={{ color: 'text.secondary' }}>
-                          {dateTime(change.at)} · {humanise(change.key)}: {change.from ?? 'unknown'} → {change.to}
+                          {dateTime(change.at, zone)} · {humanise(change.key)}: {change.from ?? 'unknown'} → {change.to}
                         </Typography>
                       ))}
                     </Stack>

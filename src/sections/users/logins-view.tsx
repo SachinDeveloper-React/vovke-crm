@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { DataTable, Mono, Panel, SelectFilter } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, dateTime, number } from '@/src/lib/format';
 import type { LoginRow, Page } from '@/src/lib/types';
 
@@ -15,6 +15,8 @@ import type { LoginRow, Page } from '@/src/lib/types';
  * "signed in now" rather than as a missing sign-out.
  */
 export async function MemberLogins({ userId, limit }: { userId: string; limit: number }) {
+  const zone = await memberZone(userId);
+
   const logins = await adminGet<Page<LoginRow>>(`/admin/users/${encodeURIComponent(userId)}/logins`, { limit });
 
   return (
@@ -45,7 +47,7 @@ export async function MemberLogins({ userId, limit }: { userId: string; limit: n
           key: `${login.deviceId}-${login.at}-${index}`,
           cells: [
             <Stack key="at" spacing={0.25}>
-              <Typography variant="body2">{dateTime(login.at)}</Typography>
+              <Typography variant="body2">{dateTime(login.at, zone)}</Typography>
               <Typography variant="caption" sx={{ color: 'text.disabled' }}>
                 {ago(login.at)}
               </Typography>
@@ -56,7 +58,7 @@ export async function MemberLogins({ userId, limit }: { userId: string; limit: n
               </Label>
             ) : (
               <Stack key="until" spacing={0.25}>
-                <Typography variant="body2">{dateTime(login.until)}</Typography>
+                <Typography variant="body2">{dateTime(login.until, zone)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
                   {ago(login.until)}
                 </Typography>

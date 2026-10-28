@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { BoolChip, Evidence, Kv, Mono, Panel, SelectFilter } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, dateTime, deviceLabel, duration, number } from '@/src/lib/format';
 import type { DeviceHealth } from '@/src/lib/types';
 
@@ -19,6 +19,8 @@ import type { DeviceHealth } from '@/src/lib/types';
  * that install last actually reported steps.
  */
 export async function MemberHealth({ userId, errors }: { userId: string; errors: number }) {
+  const zone = await memberZone(userId);
+
   const health = await adminGet<DeviceHealth>(`/admin/users/${encodeURIComponent(userId)}/health`, { errors });
 
   return (
@@ -80,7 +82,7 @@ export async function MemberHealth({ userId, errors }: { userId: string; errors:
                 </Typography>
                 <Kv
                   items={[
-                    { label: 'Last snapshot accepted', value: ago(device.stepSync.uploadedAt), hint: dateTime(device.stepSync.uploadedAt) },
+                    { label: 'Last snapshot accepted', value: ago(device.stepSync.uploadedAt), hint: dateTime(device.stepSync.uploadedAt, zone) },
                     { label: 'Last pushed to sync', value: ago(device.stepSync.nudgedAt) },
                     { label: 'Last told in words', value: ago(device.stepSync.remindedAt) },
                     { label: 'Revoked', value: device.revoked ? 'yes' : 'no' },

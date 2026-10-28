@@ -8,7 +8,7 @@ import { Iconify } from '@/src/components/iconify/iconify';
 import { Label } from '@/src/components/label';
 import { DataTable, Mono, Panel, Stat } from '@/src/components/ui';
 import { GrantBadgeForm } from './badge-form';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, date as formatDate, humanise, number, percent } from '@/src/lib/format';
 import type { Badge, MemberAchievements } from '@/src/lib/types';
 
@@ -22,6 +22,8 @@ import type { Badge, MemberAchievements } from '@/src/lib/types';
  * while they were off is a payment still owed.
  */
 export async function MemberBadgesView({ userId }: { userId: string }) {
+  const zone = await memberZone(userId);
+
   const report = await adminGet<MemberAchievements>(`/admin/users/${encodeURIComponent(userId)}/achievements`);
   const { summary, badges, challenges } = report;
 
@@ -146,7 +148,7 @@ export async function MemberBadgesView({ userId }: { userId: string }) {
               <Stack key="at" spacing={0.25} sx={{ textAlign: 'right' }}>
                 <Typography variant="body2">{ago(row.completedAt)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {dateTime(row.completedAt)}
+                  {dateTime(row.completedAt, zone)}
                 </Typography>
               </Stack>,
             ],

@@ -5,10 +5,10 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { BoolChip, DataTable, Evidence, Kv, LinkButton, Mono, Panel, SelectFilter, SeverityChip } from '@/src/components/ui';
-import { adminGet, adminTry } from '@/src/lib/api';
+import { adminTry, memberOverview, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, deviceLabel, humanise, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { AuditRow, Page, ProblemReport, UserOverview } from '@/src/lib/types';
+import type { AuditRow, Page, ProblemReport } from '@/src/lib/types';
 
 import { StatusForm, VerifyContactForm } from './money-forms';
 
@@ -19,8 +19,10 @@ import { StatusForm, VerifyContactForm } from './money-forms';
  * wrong, because that is what the conversation is usually about.
  */
 export async function MemberOverview({ userId, auditLimit = 20 }: { userId: string; auditLimit?: number }) {
+  const zone = await memberZone(userId);
+
   const [overview, problems, audit] = await Promise.all([
-    adminGet<UserOverview>(`/admin/users/${encodeURIComponent(userId)}`),
+    memberOverview(userId),
     adminTry<ProblemReport>(`/admin/users/${encodeURIComponent(userId)}/problems`),
     adminTry<Page<AuditRow>>(`/admin/users/${encodeURIComponent(userId)}/audit`, { limit: auditLimit }),
   ]);
@@ -89,17 +91,17 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
             <Kv
               items={[
                 { label: 'Name', value: account.name || '—' },
-                { label: 'Email', value: account.email, hint: account.emailVerifiedAt ? `verified ${dateTime(account.emailVerifiedAt)}` : 'not verified' },
-                { label: 'Phone', value: account.phone, hint: account.phoneVerifiedAt ? `verified ${dateTime(account.phoneVerifiedAt)}` : 'not verified' },
-                { label: 'Signed up', value: dateTime(account.signedUpAt), hint: ago(account.signedUpAt) },
-                { label: 'Profile completed', value: account.profileCompletedAt ? dateTime(account.profileCompletedAt) : 'not completed' },
+                { label: 'Email', value: account.email, hint: account.emailVerifiedAt ? `verified ${dateTime(account.emailVerifiedAt, zone)}` : 'not verified' },
+                { label: 'Phone', value: account.phone, hint: account.phoneVerifiedAt ? `verified ${dateTime(account.phoneVerifiedAt, zone)}` : 'not verified' },
+                { label: 'Signed up', value: dateTime(account.signedUpAt, zone), hint: ago(account.signedUpAt) },
+                { label: 'Profile completed', value: account.profileCompletedAt ? dateTime(account.profileCompletedAt, zone) : 'not completed' },
                 { label: 'Gender · born', value: `${account.gender ?? '—'} · ${account.dateOfBirth ?? '—'}` },
                 { label: 'Country · zone', value: `${account.country ?? '—'} · ${account.timezone ?? '—'}` },
                 { label: 'Trust', value: `${account.trust.tier ?? '—'} · ${account.trust.score ?? '—'}` },
                 { label: 'Frozen', value: <BoolChip value={account.flags.frozen} goodWhen={false} yes="frozen" no="no" /> },
                 { label: 'Legal hold', value: <BoolChip value={account.flags.legalHold} goodWhen={false} yes="held" no="no" /> },
-                { label: 'Deletion', value: account.deletion.scheduledAt ? `${dateTime(account.deletion.scheduledAt)} → purge ${dateTime(account.deletion.purgeAt)}` : 'none', hint: account.deletion.reason ?? undefined },
-                { label: 'Last export', value: account.lastExportAt ? dateTime(account.lastExportAt) : 'never' },
+                { label: 'Deletion', value: account.deletion.scheduledAt ? `${dateTime(account.deletion.scheduledAt, zone)} → purge ${dateTime(account.deletion.purgeAt, zone)}` : 'none', hint: account.deletion.reason ?? undefined },
+                { label: 'Last export', value: account.lastExportAt ? dateTime(account.lastExportAt, zone) : 'never' },
               ]}
             />
           </Panel>
@@ -110,9 +112,9 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
             <Panel title="When they were last here" note="The heartbeat is the newest request from any of their phones, written at most once every five minutes.">
               <Kv
                 items={[
-                  { label: 'Last request', value: ago(activity.lastActiveAt), hint: dateTime(activity.lastActiveAt) },
+                  { label: 'Last request', value: ago(activity.lastActiveAt), hint: dateTime(activity.lastActiveAt, zone) },
                   { label: 'Last screen', value: activity.lastScreen ?? '—', hint: activity.lastScreenAt ? ago(activity.lastScreenAt) : undefined },
-                  { label: 'Trail spans', value: `${dateTime(activity.firstEventAt)} → ${dateTime(activity.lastEventAt)}` },
+                  { label: 'Trail spans', value: `${dateTime(activity.firstEventAt, zone)} → ${dateTime(activity.lastEventAt, zone)}` },
                   { label: 'Events', value: `${number(activity.events)} all time`, hint: `${number(activity.events7d)} in 7d · ${number(activity.events30d)} in 30d` },
                   { label: 'Sign-ins', value: number(counts.logins) },
                 ]}
@@ -201,7 +203,7 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
               <Stack key="active" spacing={0.25} sx={{ textAlign: 'right' }}>
                 <Typography variant="body2">{ago(install.lastActiveAt)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {dateTime(install.lastActiveAt)}
+                  {dateTime(install.lastActiveAt, zone)}
                 </Typography>
               </Stack>,
             ],
@@ -273,7 +275,7 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
                     <Stack key="at" spacing={0.25}>
                       <Typography variant="body2">{ago(row.at)}</Typography>
                       <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                        {dateTime(row.at)}
+                        {dateTime(row.at, zone)}
                       </Typography>
                     </Stack>,
                     <Typography key="what" variant="subtitle2">

@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import { ColumnChart, RankedBars } from '@/src/components/charts';
 import { CursorPager, DataTable, Evidence, FilterBar, Mono, Panel, SearchFilter, SelectFilter, Stat } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, dateTime, humanise, number } from '@/src/lib/format';
 import type { Page, TrailRow, TrailSummary } from '@/src/lib/types';
 
@@ -32,6 +32,8 @@ export async function MemberTrail({
   name: string;
   screen: string;
 }) {
+  const zone = await memberZone(userId);
+
   const base = `/admin/users/${encodeURIComponent(userId)}`;
   const [summary, trail] = await Promise.all([
     adminGet<TrailSummary>(`${base}/activity/summary`, { days }),
@@ -48,10 +50,10 @@ export async function MemberTrail({
           <Stat label="Visits" value={number(summary.sessions)} icon="solar:play-circle-bold-duotone" hint="App launches that sent a session id" />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="First event" value={ago(summary.firstAt)} icon="solar:history-bold-duotone" hint={dateTime(summary.firstAt)} />
+          <Stat label="First event" value={ago(summary.firstAt)} icon="solar:history-bold-duotone" hint={dateTime(summary.firstAt, zone)} />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="Last event" value={ago(summary.lastAt)} icon="solar:clock-circle-bold-duotone" hint={dateTime(summary.lastAt)} />
+          <Stat label="Last event" value={ago(summary.lastAt)} icon="solar:clock-circle-bold-duotone" hint={dateTime(summary.lastAt, zone)} />
         </Grid>
       </Grid>
 
@@ -112,7 +114,7 @@ export async function MemberTrail({
             key: row.id,
             cells: [
               <Stack key="at" spacing={0.25}>
-                <Typography variant="body2">{dateTime(row.at)}</Typography>
+                <Typography variant="body2">{dateTime(row.at, zone)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
                   {ago(row.at)}
                   {row.receivedAt !== row.at ? ` · received ${ago(row.receivedAt)}` : ''}

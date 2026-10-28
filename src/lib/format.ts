@@ -5,6 +5,10 @@
  * tooltip reads the same as the one in the table above it.
  */
 
+// Written with its extension so `node --test` can resolve it from
+// `format.test.ts`; webpack and tsc read it the same either way.
+import { ADMIN_TIMEZONE } from './zone.ts';
+
 const COMPACT = new Intl.NumberFormat('en-IN', { notation: 'compact', maximumFractionDigits: 1 });
 const PLAIN = new Intl.NumberFormat('en-IN');
 
@@ -44,28 +48,68 @@ export function coins(value: number | null | undefined): string {
   return value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 }
 
-const DATE_TIME = new Intl.DateTimeFormat('en-IN', {
-  day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true,
-});
-const DATE_ONLY = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-const DAY_SHORT = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short' });
+/**
+ * Every date below is written in a zone it was given, never in the zone the
+ * runtime happens to be in.
+ *
+ * `Intl` with no `timeZone` reads the process's own: the operator's machine
+ * in development and UTC on the server, so a release time written as 06:44
+ * pm here appeared as 01:14 pm in production with nothing on screen to say
+ * so. An instant now carries its zone's short name; a day-only string is
+ * read and written in UTC, because it is a label rather than an instant and
+ * parsing it in a zone behind UTC would move it to the day before.
+ */
+const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
-export function dateTime(iso: string | null | undefined): string {
+type Shape = 'dateTime' | 'date' | 'dayShort';
+
+const SHAPES: Record<Shape, Intl.DateTimeFormatOptions> = {
+  dateTime: {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true, timeZoneName: 'short',
+  },
+  date: { day: '2-digit', month: 'short', year: 'numeric' },
+  dayShort: { day: '2-digit', month: 'short' },
+};
+
+function formatter(shape: Shape, zone: string): Intl.DateTimeFormat {
+  const key = `${shape}:${zone}`;
+  const made = FORMATTERS.get(key) ?? new Intl.DateTimeFormat('en-IN', { ...SHAPES[shape], timeZone: zone });
+  FORMATTERS.set(key, made);
+  return made;
+}
+
+/** A `YYYY-MM-DD` local day, as against an instant. */
+const DAY_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * "31 Oct 2026, 06:44 pm IST" — an instant on `zone`'s clock.
+ *
+ * The zone's name is part of the string on purpose. A member's figure read on
+ * the wrong clock is five and a half hours of confusion, and the operator
+ * cannot tell the two apart unless the string says which one it is. Pass the
+ * member's own zone for anything that happened on their phone; the default is
+ * the zone the panel's own days are bucketed in.
+ */
+export function dateTime(iso: string | null | undefined, zone: string = ADMIN_TIMEZONE): string {
   if (!iso) return '—';
   const at = new Date(iso);
-  return Number.isNaN(at.getTime()) ? '—' : DATE_TIME.format(at);
+  return Number.isNaN(at.getTime()) ? '—' : formatter('dateTime', zone).format(at);
 }
 
-export function date(iso: string | null | undefined): string {
+/** "28 Oct 2026" — a local day as it stands, or the day an instant falls on in `zone`. */
+export function date(iso: string | null | undefined, zone: string = ADMIN_TIMEZONE): string {
   if (!iso) return '—';
-  const at = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
-  return Number.isNaN(at.getTime()) ? '—' : DATE_ONLY.format(at);
+  const dayOnly = DAY_ONLY.test(iso);
+  const at = new Date(dayOnly ? `${iso}T00:00:00Z` : iso);
+  return Number.isNaN(at.getTime()) ? '—' : formatter('date', dayOnly ? 'UTC' : zone).format(at);
 }
 
-/** "04 Oct" — an axis tick for a local-day string. */
+/** "04 Oct" — an axis tick for a local-day string, which is already local. */
 export function dayTick(day: string): string {
-  const at = new Date(`${day}T00:00:00`);
-  return Number.isNaN(at.getTime()) ? day : DAY_SHORT.format(at);
+  if (!DAY_ONLY.test(day)) return day;
+  const at = new Date(`${day}T00:00:00Z`);
+  return Number.isNaN(at.getTime()) ? day : formatter('dayShort', 'UTC').format(at);
 }
 
 /**

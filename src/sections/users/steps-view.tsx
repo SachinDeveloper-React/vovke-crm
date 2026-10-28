@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { ColumnChart } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
 import { DataTable, DaysFilter, FilterBar, Kv, Panel, Stat, TextLink } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { paths } from '@/src/layout/paths';
 import { ago, date as formatDate, dateTime, humanise, number, percent } from '@/src/lib/format';
 import type { MemberSteps } from '@/src/lib/types';
@@ -23,6 +23,8 @@ import { SourceChips, SourceName, statusOf } from './step-sources';
  * the one the member actually set rather than the default.
  */
 export async function MemberStepsView({ userId, days }: { userId: string; days: number }) {
+  const zone = await memberZone(userId);
+
   const report = await adminGet<MemberSteps>(`/admin/users/${encodeURIComponent(userId)}/steps`, { days });
   const { window, goal, totals, streak, bySource, last, byDay, data } = report;
 
@@ -180,7 +182,7 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
                     { label: 'App version', value: last.appVersion ?? '—' },
                     {
                       label: 'Synced',
-                      value: last.syncedAt ? `${dateTime(last.syncedAt)} · ${ago(last.syncedAt)}` : 'no upload kept',
+                      value: last.syncedAt ? `${dateTime(last.syncedAt, zone)} · ${ago(last.syncedAt)}` : 'no upload kept',
                     },
                     { label: 'Scored', value: last.scoredAt ? ago(last.scoredAt) : 'never scored' },
                   ]}

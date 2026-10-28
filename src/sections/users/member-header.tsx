@@ -7,10 +7,9 @@ import Typography from '@mui/material/Typography';
 import { Iconify } from '@/src/components/iconify/iconify';
 import { Label } from '@/src/components/label';
 import { LinkButton, Mono, SectionGuide, TrustChip } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { memberOverview } from '@/src/lib/api';
 import { ago, coins, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { UserOverview } from '@/src/lib/types';
 
 import { MemberTabs } from './member-tabs';
 
@@ -20,9 +19,7 @@ import { MemberTabs } from './member-tabs';
  */
 export async function MemberHeader({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
-  const { account, counts, wallet, orders, activity } = await adminGet<UserOverview>(
-    `/admin/users/${encodeURIComponent(userId)}`,
-  );
+  const { account, counts, wallet, orders, activity } = await memberOverview(userId);
 
   const states = [
     account.deletedAt && { color: 'error' as const, text: 'deleted' },

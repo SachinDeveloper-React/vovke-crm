@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { CursorPager, DataTable, LinkButton, Mono, OrderStatusChip, Panel, RowLink, SelectFilter, Stat } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
 import type { MemberOrders } from '@/src/lib/types';
@@ -25,6 +25,8 @@ export async function MemberOrdersView({
   status: string;
   cursor: string;
 }) {
+  const zone = await memberZone(userId);
+
   const orders = await adminGet<MemberOrders>(`/admin/users/${encodeURIComponent(userId)}/orders`, {
     limit: 25,
     status: status || undefined,
@@ -147,7 +149,7 @@ export async function MemberOrdersView({
               <Stack key="at" spacing={0.25} sx={{ textAlign: 'right' }}>
                 <Typography variant="body2">{ago(order.placedAt)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {dateTime(order.placedAt)}
+                  {dateTime(order.placedAt, zone)}
                   {order.city ? ` · ${order.city}` : ''}
                 </Typography>
               </Stack>,

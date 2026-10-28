@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
 import { DataTable, Kv, Mono, Panel, PermissionChip, Stat, TextLink } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, hours, humanise, number } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
 import type { MemberConfig, MemberNotification, Page } from '@/src/lib/types';
@@ -22,6 +22,8 @@ import { MemberNotificationPrefsForm, MemberStepsForm, NudgeForm, SendMessageFor
  * something.
  */
 export async function MemberConfigView({ userId }: { userId: string }) {
+  const zone = await memberZone(userId);
+
   const [config, feed] = await Promise.all([
     adminGet<MemberConfig>(`/admin/users/${encodeURIComponent(userId)}/config`),
     adminGet<Page<MemberNotification>>(`/admin/users/${encodeURIComponent(userId)}/notifications`, { limit: 25 }),
@@ -225,7 +227,7 @@ export async function MemberConfigView({ userId }: { userId: string }) {
               <Stack key="at" spacing={0.25}>
                 <Typography variant="body2">{ago(row.createdAt)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {dateTime(row.createdAt)}
+                  {dateTime(row.createdAt, zone)}
                 </Typography>
               </Stack>,
               <Label key="topic" color="default" variant="soft">
@@ -253,7 +255,7 @@ export async function MemberConfigView({ userId }: { userId: string }) {
                     held
                   </Label>
                   <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                    until {dateTime(row.pushDeferredUntil)}
+                    until {dateTime(row.pushDeferredUntil, zone)}
                   </Typography>
                 </Stack>
               ) : (

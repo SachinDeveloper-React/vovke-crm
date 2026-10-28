@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { ColumnChart, RankedBars } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
 import { CursorPager, DataTable, Kv, Mono, Panel, SelectFilter, Stat } from '@/src/components/ui';
-import { adminGet } from '@/src/lib/api';
+import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, date as formatDate, humanise, number } from '@/src/lib/format';
 import type { LedgerRow, MemberWallet, Page } from '@/src/lib/types';
 
@@ -31,6 +31,8 @@ export async function MemberCoinsView({
   source: string;
   cursor: string;
 }) {
+  const zone = await memberZone(userId);
+
   const [wallet, ledger] = await Promise.all([
     adminGet<MemberWallet>(`/admin/users/${encodeURIComponent(userId)}/wallet`),
     adminGet<Page<LedgerRow>>(`/admin/users/${encodeURIComponent(userId)}/ledger`, {
@@ -180,7 +182,7 @@ export async function MemberCoinsView({
               <Stack key="at" spacing={0.25}>
                 <Typography variant="body2">{ago(row.createdAt)}</Typography>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {dateTime(row.createdAt)}
+                  {dateTime(row.createdAt, zone)}
                 </Typography>
               </Stack>,
               <Typography key="title" variant="subtitle2">
@@ -227,7 +229,7 @@ export async function MemberCoinsView({
           <Panel
             title="Escrow"
             subtitle={`${number(held.length)} still held · ${number(voided.length)} voided`}
-            note="Step coins are held before they are paid (RULES E15): the window is the trust tier's. A confirmed fraud flag voids what the day was holding — that is what a voided row is. The newest 50 holds; the ledger below carries every row, paged."
+            note="Step coins are held before they are paid (RULES E15): the window is the trust tier's, and the times below are on the member's own clock. A confirmed fraud flag voids what the day was holding — that is what a voided row is. The newest 50 holds; the ledger below carries every row, paged."
             dense
           >
             <DataTable
@@ -244,7 +246,7 @@ export async function MemberCoinsView({
                   <Stack key="day" spacing={0.25}>
                     <Typography variant="body2">{hold.localDay ? formatDate(hold.localDay) : humanise(hold.source)}</Typography>
                     <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                      {dateTime(hold.createdAt)}
+                      {dateTime(hold.createdAt, zone)}
                     </Typography>
                   </Stack>,
                   coins(hold.amount),
@@ -255,7 +257,16 @@ export async function MemberCoinsView({
                   >
                     {hold.status}
                   </Label>,
-                  hold.releaseAfter ? ago(hold.releaseAfter) : '—',
+                  hold.releaseAfter ? (
+                    <Stack key="due" spacing={0.25}>
+                      <Typography variant="body2">{ago(hold.releaseAfter)}</Typography>
+                      <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+                        {dateTime(hold.releaseAfter, zone)}
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    '—'
+                  ),
                   <Typography key="reason" variant="caption" sx={{ color: 'text.secondary' }}>
                     {hold.reason ?? '—'}
                   </Typography>,

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "TZ=UTC node --test 'src/**/*.test.ts' && TZ=America/New_York node --test 'src/**/*.test.ts'",
     "examples": "node scripts/write-example-sheets.ts"
   },
   "dependencies": {

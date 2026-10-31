@@ -150,7 +150,7 @@ export interface UserOverview {
     events7d: number;
     events30d: number;
   };
-  wallet: { balance: number; pending: number; lifetimeEarned: number; lastCreditAt: string | null };
+  wallet: { balance: number; pending: number; lifetimeEarned: number; lastCreditAt: string | null; lastStepSyncAt: string | null };
   orders: { count: number; payable: number; coinsUsed: number; lastAt: string | null };
   counts: { devices: number; activeDevices: number; logins: number; liveSessions: number };
   installs: Install[];
@@ -944,6 +944,8 @@ export interface MemberWallet {
     pending: number;
     lifetimeEarned: number;
     lastCreditAt: string | null;
+    /** The newest accepted step snapshot. The expiry window runs from here (RULES E9). */
+    lastStepSyncAt: string | null;
     expiresAt: string | null;
     expiryWindowDays: number;
   };
@@ -1475,6 +1477,57 @@ export interface Tips {
 export interface TipResult {
   created?: boolean;
   tip: TipRow;
+}
+
+/** One invite card, as `/admin/referral-cards` lists it. */
+export interface ReferralCardRow {
+  id: string;
+  screen: string;
+  title: string;
+  message: string;
+  ctaLabel: string;
+  accent: string;
+  /** Where down the screen it sits: top, middle or bottom. */
+  position: string;
+  emoji: string;
+  sort: number;
+  active: boolean;
+  /** True for the card that is on that screen today. */
+  showingToday: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+export interface ReferralCards {
+  total: number;
+  offset: number;
+  limit: number;
+  /** The places in the app a card can be written for. Closed — each is a spot. */
+  screens: string[];
+  /** The tints the app can draw it in. Names, not colours. */
+  accents: string[];
+  /** The anchors a screen opens for it. Three: each is a real gap in the layout. */
+  positions: string[];
+  byScreen: {
+    screen: string;
+    cards: number;
+    active: number;
+    /** The id on that screen today, or null where no card is drawn. */
+    todayId: string | null;
+  }[];
+  totals: {
+    cards: number;
+    active: number;
+    /** Screens carrying no card: the invite is simply absent there. */
+    silentScreens: string[];
+  };
+  data: ReferralCardRow[];
+  nextCursor: null;
+}
+
+export interface ReferralCardResult {
+  created?: boolean;
+  card: ReferralCardRow;
 }
 
 export interface TipsAddResult {

@@ -129,6 +129,7 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
                   { label: 'Pending', value: coins(wallet.pending) },
                   { label: 'Lifetime earned', value: coins(wallet.lifetimeEarned) },
                   { label: 'Last credit', value: ago(wallet.lastCreditAt) },
+                  { label: 'Last step sync', value: ago(wallet.lastStepSyncAt), hint: 'the coin expiry window runs from here' },
                   { label: 'Orders', value: number(orders.count) },
                   { label: 'Paid in money', value: rupees(orders.payable) },
                   { label: 'Paid in coins', value: coins(orders.coinsUsed) },

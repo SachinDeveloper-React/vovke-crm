@@ -182,6 +182,12 @@ export const navData: NavGroupData[] = [
         caption: 'The lines each screen says',
       },
       {
+        title: 'Invite cards',
+        path: paths.dashboard.referralCards,
+        icon: <Iconify icon="solar:gift-bold-duotone" />,
+        caption: 'The refer-a-friend card, screen by screen',
+      },
+      {
         title: 'App config',
         path: paths.dashboard.config,
         icon: <Iconify icon="solar:tuning-square-bold-duotone" />,

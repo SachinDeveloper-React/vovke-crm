@@ -100,6 +100,8 @@ export const paths = {
     faq: `${ROOTS.DASHBOARD}/faq`,
     /** The quotes and tips the app says in its own voice (BACKEND §6.15). */
     quotes: `${ROOTS.DASHBOARD}/quotes`,
+    /** The refer-a-friend card every earning screen carries (BACKEND §6.15). */
+    referralCards: `${ROOTS.DASHBOARD}/referral-cards`,
     /** Every other config key, section by section. */
     config: `${ROOTS.DASHBOARD}/config`,
   },

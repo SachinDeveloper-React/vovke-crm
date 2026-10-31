@@ -804,6 +804,26 @@ export const sectionGuides: SectionGuide[] = [
     ],
   },
   {
+    pattern: '/dashboard/referral-cards',
+    group: 'System',
+    title: 'Invite cards',
+    question: 'What is the app asking members to do about referrals?',
+    what:
+      'The refer-a-friend card the app draws on every screen that earns coins — home, wallet, shop, challenges, nutrition, the checkup, water, the streak, step analytics and the account menu. The heading, the pitch, the button, the colour, the glyph and which screens carry it at all live here, so a campaign reaches members without an app release.',
+    how: [
+      'Read the panel at the top first: it says which card each screen is drawing today, because a screen with several live cards rotates them a day at a time and nobody can work that out from a list.',
+      'Write {coins} in the words where the reward belongs. The server fills it in from what it is actually paying per referral.',
+      'Order decides the rotation. Hide a card to take it out of it and keep it; delete it when the campaign is over.',
+    ],
+    writes: ['Write or edit a card', 'Hide one', 'Reorder the rotation', 'Delete one'],
+    careful: [
+      'The reward is deliberately not a field. A figure typed here would keep being right only until somebody changed ⚙ coins.referral, and the card is a promise — so {coins} and {friendCoins} are filled by the server instead.',
+      'A screen with nothing live draws no card at all. That is how the invite is switched off in one place without touching the rest, and the page counts those screens so it is not a surprise.',
+      'The screens are a closed list: each one is a spot built for the card in the app, so a new placement is an app release.',
+      'A card an operator has rewritten is left alone by the next deploy’s re-seed. One still carrying the shipped wording is kept current by it.',
+    ],
+  },
+  {
     pattern: '/dashboard/quotes',
     group: 'System',
     title: 'Quotes & tips',

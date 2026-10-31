@@ -57,7 +57,7 @@ export async function MemberCoinsView({
             icon="solar:wallet-money-bold-duotone"
             hint={
               balance.expiresAt
-                ? `idle coins lapse ${ago(balance.expiresAt)} (${balance.expiryWindowDays}-day window)`
+                ? `lapses ${ago(balance.expiresAt)} without a step sync (${balance.expiryWindowDays}-day window)`
                 : 'nothing to lapse'
             }
           />
@@ -109,6 +109,11 @@ export async function MemberCoinsView({
                   { label: 'Most from steps', value: `${number(rate.sourceCaps.steps ?? 0)} coins a day` },
                   { label: 'Step coins', value: rate.stepsEnabled ? 'minting' : 'off (shadow)' },
                   { label: 'Last credit', value: ago(balance.lastCreditAt) },
+                  {
+                    label: 'Last step sync',
+                    value: ago(balance.lastStepSyncAt),
+                    hint: balance.lastStepSyncAt ? undefined : 'never synced — the window runs from the last credit instead',
+                  },
                 ]}
               />
             </Box>

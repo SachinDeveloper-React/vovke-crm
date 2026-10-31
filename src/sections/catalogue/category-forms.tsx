@@ -13,6 +13,9 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+
 import { Iconify } from '@/src/components/iconify/iconify';
 // Straight from the module rather than the `components/ui` barrel: the
 // barrel also exports `ApiErrorNotice`, which imports `lib/api` and so
@@ -28,6 +31,8 @@ import {
   deleteSubcategory,
   moveItems,
   renameSubcategory,
+  reorderCategory,
+  reorderSubcategory,
   updateCategory,
   updateSubcategory,
   type CategoryActionState,
@@ -416,6 +421,120 @@ export function AddCategoryButton({ icons }: { icons: string[] }) {
 }
 
 /** Rename, re-order, retire, delete — the four things a shelf row offers. */
+/**
+ * One nudge along the row, as a form so it works without JavaScript like
+ * every other write in the panel.
+ *
+ * Disabled at the ends rather than hidden: a column of buttons that changes
+ * width on the first and last row is harder to scan than one greyed button,
+ * and the server treats a move off the end as a no-op anyway.
+ */
+function Nudge({
+  action,
+  fields,
+  direction,
+  disabled,
+  what,
+}: {
+  action: (previous: CategoryActionState, form: FormData) => Promise<CategoryActionState>;
+  fields: Record<string, string>;
+  direction: 'up' | 'down';
+  disabled: boolean;
+  what: string;
+}) {
+  const [state, submit, pending] = useActionState<CategoryActionState, FormData>(action, {});
+  const up = direction === 'up';
+
+  return (
+    <Tooltip title={state.error ?? `Move ${what} ${up ? 'up' : 'down'}`}>
+      <Box component="form" action={submit} sx={{ display: 'inline-flex' }}>
+        {Object.entries(fields).map(([name, value]) => (
+          <input key={name} type="hidden" name={name} value={value} />
+        ))}
+        <input type="hidden" name="direction" value={direction} />
+        <IconButton
+          type="submit"
+          size="small"
+          color={state.error ? 'error' : 'default'}
+          disabled={disabled || pending}
+          aria-label={`Move ${what} ${up ? 'up' : 'down'}`}
+        >
+          <Iconify icon={up ? 'eva:arrow-ios-upward-fill' : 'eva:arrow-ios-downward-fill'} />
+        </IconButton>
+      </Box>
+    </Tooltip>
+  );
+}
+
+/**
+ * The two arrows that put a shelf where the operator wants it.
+ *
+ * The order has always been the operator's — `sort` is on the form and the
+ * app draws by it — but setting it meant choosing a number, which is not how
+ * anybody thinks about the order of four shelves. `first`/`last` come from
+ * the row's own position in the list, which is already in that order.
+ */
+export function CategoryOrderActions({
+  shelf,
+  first,
+  last,
+}: {
+  shelf: ShopCategory;
+  first: boolean;
+  last: boolean;
+}) {
+  return (
+    <Stack direction="row" spacing={0} sx={{ alignItems: 'center' }}>
+      <Nudge
+        action={reorderCategory}
+        fields={{ slug: shelf.category }}
+        direction="up"
+        disabled={first}
+        what={shelf.name}
+      />
+      <Nudge
+        action={reorderCategory}
+        fields={{ slug: shelf.category }}
+        direction="down"
+        disabled={last}
+        what={shelf.name}
+      />
+    </Stack>
+  );
+}
+
+/** The same two arrows, for a name inside one shelf's list. */
+export function SubcategoryOrderActions({
+  category,
+  name,
+  first,
+  last,
+}: {
+  category: string;
+  name: string;
+  first: boolean;
+  last: boolean;
+}) {
+  return (
+    <Stack direction="row" spacing={0} sx={{ alignItems: 'center' }}>
+      <Nudge
+        action={reorderSubcategory}
+        fields={{ category, name }}
+        direction="up"
+        disabled={first}
+        what={name}
+      />
+      <Nudge
+        action={reorderSubcategory}
+        fields={{ category, name }}
+        direction="down"
+        disabled={last}
+        what={name}
+      />
+    </Stack>
+  );
+}
+
 export function CategoryRowActions({
   shelf,
   others,

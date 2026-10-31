@@ -11,9 +11,11 @@ import type { Categories, ShelfMeasure } from '@/src/lib/types';
 
 import {
   AddCategoryButton,
+  CategoryOrderActions,
   CategoryRowActions,
   MoveItemsForm,
   SubcategoryForm,
+  SubcategoryOrderActions,
   SubcategoryRowActions,
 } from './category-forms';
 
@@ -116,11 +118,12 @@ export async function CategoriesView() {
         title={`${number(data.length)} shel${data.length === 1 ? 'f' : 'ves'}`}
         subtitle={widest ? `${widest.name} has sold the most` : undefined}
         action={<AddCategoryButton icons={icons} />}
-        note="A shelf added here is live for the app on its next fetch: the server sends its name and its icon with the shelf, so a phone installed last month draws one added this afternoon. The slug is what every item carries, which is why it cannot be changed afterwards."
+        note="Top to bottom here is left to right in the app — the filter row, the tile grid and the search chips all follow it. The arrows move a shelf one place and renumber the row, so the positions stay the numbers. A shelf added here is live on the app's next fetch: the server sends its name and its icon, so a phone installed last month draws one added this afternoon. The slug is what every item carries, which is why it cannot be changed afterwards."
         dense
       >
         <DataTable
           columns={[
+            { label: 'Order', width: 120 },
             { label: 'Shelf' },
             { label: 'Items', align: 'right' },
             { label: 'Stock', align: 'right' },
@@ -129,10 +132,22 @@ export async function CategoriesView() {
             { label: 'Rating', align: 'right' },
             { label: '', align: 'right', width: 140 },
           ]}
-          rows={data.map(shelf => ({
+          rows={data.map((shelf, index) => ({
             key: shelf.category,
             tone: shelf.items === 0 ? 'danger' : 'default',
             cells: [
+              // The list is already in the order the app draws, so a row's
+              // own place in it is the position — no second source for it.
+              <Stack key="order" direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                <Typography variant="subtitle2" sx={{ minWidth: 20 }}>
+                  {index + 1}
+                </Typography>
+                <CategoryOrderActions
+                  shelf={shelf}
+                  first={index === 0}
+                  last={index === data.length - 1}
+                />
+              </Stack>,
               <Stack key="name" spacing={0.25}>
                 <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
                   <TextLink
@@ -203,6 +218,7 @@ export async function CategoriesView() {
         >
           <DataTable
             columns={[
+              { label: 'Order', width: 120 },
               { label: 'Subcategory' },
               { label: 'Items', align: 'right' },
               { label: 'Stock', align: 'right' },
@@ -211,9 +227,20 @@ export async function CategoriesView() {
               { label: '', align: 'right', width: 110 },
             ]}
             rows={[
-              ...shelf.subcategories.map(sub => ({
+              ...shelf.subcategories.map((sub, index) => ({
                 key: `${shelf.category}:${sub.name}`,
                 cells: [
+                  <Stack key="order" direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+                    <Typography variant="subtitle2" sx={{ minWidth: 20 }}>
+                      {index + 1}
+                    </Typography>
+                    <SubcategoryOrderActions
+                      category={shelf.category}
+                      name={sub.name}
+                      first={index === 0}
+                      last={index === shelf.subcategories.length - 1}
+                    />
+                  </Stack>,
                   <Stack key="name" spacing={0.25}>
                     <Typography variant="subtitle2">{sub.name}</Typography>
                     <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
@@ -252,6 +279,10 @@ export async function CategoriesView() {
                       key: `${shelf.category}:unfiled`,
                       tone: 'danger' as const,
                       cells: [
+                        // Not a row of the list, so it has no place in it.
+                        <Typography key="order" variant="caption" sx={{ color: 'text.disabled' }}>
+                          —
+                        </Typography>,
                         <Typography key="name" variant="subtitle2" sx={{ color: 'text.secondary' }}>
                           no subcategory
                         </Typography>,

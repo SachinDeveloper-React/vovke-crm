@@ -499,15 +499,24 @@ export const sectionGuides: SectionGuide[] = [
     title: 'Categories',
     question: 'What is each shelf carrying, and what do people want from it?',
     what:
-      'The four top-level shelves with what each holds — items, stock at selling price, units and goods sold — and what people want that is not an order yet, with every subcategory under it. Subcategories are free text on the item and fully editable; the four categories themselves are not.',
+      'Every shelf with what it holds — items, stock at selling price, units and goods sold — and what people want that is not an order yet, with every subcategory under it. Shelves and subcategories are both yours: add them, rename them, order them, take them off the app.',
     how: [
+      'Top to bottom here is left to right in the app. The arrows in the Order column move a shelf one place and renumber the row, so the number beside a shelf is its position — that is what the filter row, the tile grid and the search chips all follow.',
+      'The names under a shelf order the same way, and that is the order of its chips.',
       'Read the wanting column beside the selling: it is the one thing sales figures cannot tell you.',
       'Rename, merge or clear a subcategory across every item holding it in one write.',
       'Move items between shelves a hundred at a time when something is filed wrong.',
     ],
-    writes: ['Rename, merge or clear a subcategory', 'Move items between shelves in bulk'],
+    writes: [
+      'Add a shelf, rename it or take it off the app',
+      'Move a shelf or a subcategory along the order',
+      'Rename, merge or clear a subcategory',
+      'Move items between shelves in bulk',
+    ],
     careful: [
-      'A fifth top-level category cannot be added here. It is a zod enum the app validates every shop response against, so inventing one would make the lists holding it fail to parse on a member\'s phone — a contract change and an app release.',
+      'A slug cannot be changed once a shelf exists: it is what every item, every filter link and every saved search carries, so re-keying it would file a shelf\'s items under a shelf that is not there. The name is the part a member reads, and that is editable.',
+      'Ordering is live on the app\'s next fetch, so a shelf moved to the front is at the front for everyone within the minute. No release.',
+      'Deleting a shelf needs somewhere for its items to go, and the panel asks for it — an item on a shelf that does not exist is an item no filter finds.',
       'A bulk move is one write over up to a hundred items. Check the filter before running it.',
     ],
   },
@@ -852,6 +861,7 @@ export const sectionGuides: SectionGuide[] = [
     how: [
       'Find the section, then the key. Each row shows the live value beside the shipped one.',
       'Change the value and save. A changed key can be put back to the shipped default from the same row.',
+      'A list is edited as a list — copy the shipped one beside it and change what you need. `coins.historyFilters` is the one worth knowing: it is which sources the coin history offers as filter chips, in that order, and one of steps, workout, streak, challenge, referral, purchase, refund. Taking one off the list takes the chip off the app; its coins still show under "All", because the filtering is the server\'s either way.',
       'Read the error when a write is refused: the real sentence is in it, naming the fields that clashed.',
     ],
     writes: ['Set any config key', 'Put a key back to its shipped default'],

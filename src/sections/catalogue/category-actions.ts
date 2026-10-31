@@ -56,6 +56,56 @@ export async function createCategory(_previous: CategoryActionState, form: FormD
   return { ok: `${name} is a shelf, and items are filed under “${result.data.slug ?? slug}”.` };
 }
 
+/**
+ * Moves a shelf one place along the row the member sees.
+ *
+ * `sort` has been on the form all along; this is the control that makes it
+ * usable. Nobody thinks about four shelves as numbers — they think "put the
+ * gym one first" — and the server renumbers the whole row on each move so
+ * the positions stay the numbers.
+ */
+export async function reorderCategory(_previous: CategoryActionState, form: FormData): Promise<CategoryActionState> {
+  const slug = text(form, 'slug');
+  const direction = text(form, 'direction');
+  if (!slug) return { error: 'Which shelf?' };
+  if (direction !== 'up' && direction !== 'down') return { error: 'Up or down?' };
+
+  const result = await adminWrite<CategoryResult>(
+    'POST',
+    `/admin/shop/categories/${encodeURIComponent(slug)}/reorder`,
+    { direction },
+  );
+  if (!result.ok) return { error: result.error };
+
+  shelvesChanged();
+  const position = (result.data.data ?? []).findIndex(row => row.category === slug) + 1;
+  return { ok: position > 0 ? `Now ${position} on the row.` : 'Moved.' };
+}
+
+/** The same, for one name inside a shelf's own list. */
+export async function reorderSubcategory(
+  _previous: CategoryActionState,
+  form: FormData,
+): Promise<CategoryActionState> {
+  const slug = text(form, 'category');
+  const name = text(form, 'name');
+  const direction = text(form, 'direction');
+  if (!slug || !name) return { error: 'Which name?' };
+  if (direction !== 'up' && direction !== 'down') return { error: 'Up or down?' };
+
+  const result = await adminWrite<CategoryResult>(
+    'POST',
+    `/admin/shop/categories/${encodeURIComponent(slug)}/subcategories/${encodeURIComponent(name)}/reorder`,
+    { direction },
+  );
+  if (!result.ok) return { error: result.error };
+
+  shelvesChanged();
+  const shelf = (result.data.data ?? []).find(row => row.category === slug);
+  const position = (shelf?.subcategories ?? []).findIndex(sub => sub.name === name) + 1;
+  return { ok: position > 0 ? `${name} is now ${position} under ${shelf?.name ?? slug}.` : 'Moved.' };
+}
+
 /** Renames a shelf, moves it along the row, or takes it off the app. Never re-keys it. */
 export async function updateCategory(_previous: CategoryActionState, form: FormData): Promise<CategoryActionState> {
   const slug = text(form, 'slug');

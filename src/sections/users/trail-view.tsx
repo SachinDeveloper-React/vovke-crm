@@ -62,7 +62,18 @@ export async function MemberTrail({
           <Panel
             title="Events a day"
             subtitle={`Bucketed in ${summary.timezone} — their day, not ours`}
-            action={<SelectFilter label="Window" param="days" value={String(days)} options={[7, 14, 30, 90].map(d => ({ value: String(d), label: `${d} days` }))} width={120} />}
+            action={
+              /* The window is the summary's alone — the trail below is
+                 cursored and unbounded by days — so this clears nothing. */
+              <SelectFilter
+                label="Window"
+                param="days"
+                value={String(days)}
+                options={[7, 14, 30, 90].map(d => ({ value: String(d), label: `${d} days` }))}
+                width={120}
+                resets={null}
+              />
+            }
           >
             <ColumnChart
               data={summary.byDay.map(day => ({ date: day.date, events: day.events, screens: day.screens }))}
@@ -96,8 +107,11 @@ export async function MemberTrail({
         note="`at` is the phone's clock — events queue offline and can arrive hours late — and the received time is ours."
         action={
           <FilterBar>
-            <SearchFilter value={name} param="name" placeholder="Event name, e.g. order_paid" />
-            <SearchFilter value={screen} param="screen" placeholder="Screen, e.g. Checkout" />
+            {/* These two narrow the cursored trail, so each drops the
+                cursor: the first matching event is the newest one, not
+                whatever is a hundred rows into the unfiltered feed. */}
+            <SearchFilter value={name} param="name" placeholder="Event name, e.g. order_paid" resets="cursor" />
+            <SearchFilter value={screen} param="screen" placeholder="Screen, e.g. Checkout" resets="cursor" />
           </FilterBar>
         }
         dense

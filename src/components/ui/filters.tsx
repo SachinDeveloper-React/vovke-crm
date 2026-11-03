@@ -46,8 +46,30 @@ export function useParamNav() {
   return { set, pending };
 }
 
+/**
+ * The pagers a filter sends back to their first page.
+ *
+ * Changing what a list shows has to drop its offset: picking a narrower
+ * filter while on page four used to leave `offset` where it was, and an
+ * offset past the end of the new list is an empty table with no sign of why.
+ * A page with two lists names both where a filter narrows both.
+ */
+export type Resets = string | string[] | null;
+
+const cleared = (resets: Resets): Record<string, null> =>
+  Object.fromEntries((resets === null ? [] : [resets].flat()).map(key => [key, null]));
+
 /** The window every figure on the page is taken over. */
-export function DaysFilter({ value, options = [7, 14, 30, 90] }: { value: number; options?: number[] }) {
+export function DaysFilter({
+  value,
+  options = [7, 14, 30, 90],
+  resets = 'offset',
+}: {
+  value: number;
+  options?: number[];
+  /** Widening or narrowing the window goes back to the first page of it. */
+  resets?: Resets;
+}) {
   const { set, pending } = useParamNav();
   return (
     <ToggleButtonGroup
@@ -56,7 +78,7 @@ export function DaysFilter({ value, options = [7, 14, 30, 90] }: { value: number
       value={value}
       disabled={pending}
       onChange={(_event, next) => {
-        if (next) set({ days: next });
+        if (next) set({ days: next, ...cleared(resets) });
       }}
       aria-label="Window in days"
     >
@@ -74,19 +96,23 @@ export function SearchFilter({
   value,
   placeholder = 'Search…',
   param = 'q',
+  resets = 'offset',
 }: {
   value: string;
   placeholder?: string;
   param?: string;
+  /** The pager(s) this filter narrows; each goes back to its first page. */
+  resets?: Resets;
 }) {
   const { set, pending } = useParamNav();
+  const narrow = (values: Record<string, string | number | null>) => set({ ...values, ...cleared(resets) });
   return (
     <Box
       component="form"
       onSubmit={event => {
         event.preventDefault();
         const input = new FormData(event.currentTarget as HTMLFormElement).get(param);
-        set({ [param]: String(input ?? '').trim() || null });
+        narrow({ [param]: String(input ?? '').trim() || null });
       }}
       sx={{ width: { xs: 1, sm: 360 } }}
     >
@@ -106,7 +132,7 @@ export function SearchFilter({
             ),
             endAdornment: value ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => set({ [param]: null })} aria-label="Clear search">
+                <IconButton size="small" onClick={() => narrow({ [param]: null })} aria-label="Clear search">
                   <Iconify icon="eva:close-fill" width={16} />
                 </IconButton>
               </InputAdornment>
@@ -125,12 +151,22 @@ export function SelectFilter({
   value,
   options,
   width = 150,
+  resets = 'offset',
 }: {
   label: string;
   param: string;
   value: string;
   options: { value: string; label: string }[];
   width?: number;
+  /**
+   * The pager this filter belongs to.
+   *
+   * Changing what a list shows goes back to its first page: picking a
+   * narrower filter while on page four used to leave `offset` where it was,
+   * and an offset past the end of the new list is an empty table with no
+   * sign of why.
+   */
+  resets?: Resets;
 }) {
   const { set, pending } = useParamNav();
   return (
@@ -140,7 +176,7 @@ export function SelectFilter({
       label={label}
       value={value}
       disabled={pending}
-      onChange={event => set({ [param]: event.target.value })}
+      onChange={event => set({ [param]: event.target.value, ...cleared(resets) })}
       sx={{ width }}
     >
       {options.map(option => (
@@ -192,15 +228,28 @@ export function CursorPager({ next, cursor }: { next: string | null; cursor: str
  * an offset would shift a page under the reader. A filtered list of accounts
  * is the other case: it has a total, and "page 3 of 7" is what an operator
  * wants to be able to say.
+ *
+ * `param` is for a page carrying two lists. The gym is exercises *and* the
+ * templates built out of them, and a member's badges are the shelf *and*
+ * every challenge period they finished — one `?offset=` cannot mean both, so
+ * each table names its own (`templateOffset`, `challengeOffset`) and the link
+ * still says which page of which.
+ *
+ * `labels` is for a list whose order is not time. "Newer" and "Older" are
+ * right for a feed and wrong for a leaderboard, where back is up the board.
  */
 export function OffsetPager({
   total,
   offset,
   limit,
+  param = 'offset',
+  labels = ['Newer', 'Older'],
 }: {
   total: number;
   offset: number;
   limit: number;
+  param?: string;
+  labels?: [string, string];
 }) {
   const { set, pending } = useParamNav();
   if (total <= limit) return null;
@@ -215,19 +264,19 @@ export function OffsetPager({
         size="small"
         color="inherit"
         disabled={pending || offset === 0}
-        onClick={() => set({ offset: Math.max(0, offset - limit) || null })}
+        onClick={() => set({ [param]: Math.max(0, offset - limit) || null })}
         startIcon={<Iconify icon="eva:arrow-ios-back-fill" />}
       >
-        Newer
+        {labels[0]}
       </Button>
       <Button
         size="small"
         variant="outlined"
         disabled={pending || offset + limit >= total}
-        onClick={() => set({ offset: offset + limit })}
+        onClick={() => set({ [param]: offset + limit })}
         endIcon={<Iconify icon="eva:arrow-ios-forward-fill" />}
       >
-        Older
+        {labels[1]}
       </Button>
     </Stack>
   );

@@ -95,7 +95,7 @@ export async function FoodsView({ query }: { query: FoodsQuery }) {
       </Grid>
 
       <FilterBar>
-        <SearchFilter value={query.q} placeholder="Name" />
+        <SearchFilter value={query.q} placeholder="Name" resets="cursor" />
       </FilterBar>
 
       <Panel

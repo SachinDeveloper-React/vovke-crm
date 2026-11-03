@@ -29,6 +29,7 @@ async function Loader({ search }: { search: Promise<SearchParams> }) {
       severity={readEnum(params, 'severity', ['any', 'hard', 'soft'] as const, 'any')}
       days={readNumber(params, 'days', 30, 1, 365)}
       limit={readNumber(params, 'limit', 25, 1, 200)}
+      offset={readNumber(params, 'offset', 0, 0, 100_000)}
     />
   );
 }

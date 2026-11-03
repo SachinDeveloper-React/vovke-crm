@@ -144,6 +144,9 @@ export async function MemberCoinsView({
         subtitle="Newest first — append-only, so a correction is another row"
         action={
           <Stack direction="row" spacing={1}>
+            {/* Both drop the cursor rather than an offset: this list is
+                cursored, and narrowing it while a hundred rows down used to
+                leave the reader there instead of at the newest match. */}
             <SelectFilter
               label="Direction"
               param="direction"
@@ -154,6 +157,7 @@ export async function MemberCoinsView({
                 { value: 'out', label: 'Spends' },
               ]}
               width={140}
+              resets="cursor"
             />
             <SelectFilter
               label="Source"
@@ -167,6 +171,7 @@ export async function MemberCoinsView({
                 })),
               ]}
               width={150}
+              resets="cursor"
             />
           </Stack>
         }

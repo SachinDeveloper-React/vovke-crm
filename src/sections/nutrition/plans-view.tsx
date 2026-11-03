@@ -3,11 +3,21 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, LinkButton, Mono, Panel, Stat } from '@/src/components/ui';
+import {
+  DataTable,
+  FilterBar,
+  LinkButton,
+  Mono,
+  OffsetPager,
+  Panel,
+  SearchFilter,
+  SelectFilter,
+  Stat,
+} from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, number } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { AdminPlan, NutritionOverview } from '@/src/lib/types';
+import type { AdminPlan, AdminPlans, NutritionOverview } from '@/src/lib/types';
 
 import { AddPlanButton, PlanRowActions } from './plan-forms';
 
@@ -33,12 +43,24 @@ function dayTotals(plan: AdminPlan): { calories: number; meals: number } {
  * it falls back to the server's choice, and the row their history points at
  * stays.
  */
-export async function DietPlansView() {
-  const [plans, overview] = await Promise.all([
-    adminGet<AdminPlan[]>('/admin/diet-plans'),
+export type DietPlansQuery = { q: string; state: string; sort: string; limit: number; offset: number };
+
+export async function DietPlansView({ query }: { query: DietPlansQuery }) {
+  const [library, overview] = await Promise.all([
+    adminGet<AdminPlans>('/admin/diet-plans', {
+      q: query.q,
+      state: query.state || 'any',
+      sort: query.sort,
+      limit: query.limit,
+      offset: query.offset,
+    }),
     adminGet<NutritionOverview>('/admin/nutrition/overview'),
   ]);
+  const plans = library.data;
 
+  // The overview carries the ten plans members are actually on, so a plan
+  // further down the library reads as 0 rather than as a figure this page
+  // would have to count itself.
   const membersOf = new Map(overview.plans.data.map(entry => [entry.id, entry.members]));
 
   return (
@@ -81,7 +103,7 @@ export async function DietPlansView() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Stat
             label="Days written"
-            value={number(plans.reduce((sum, plan) => sum + plan.days.length, 0))}
+            value={number(library.totals.days)}
             icon="solar:calendar-bold-duotone"
             goodDirection="none"
             hint="across every plan, in rotation"
@@ -89,11 +111,48 @@ export async function DietPlansView() {
         </Grid>
       </Grid>
 
+      <FilterBar>
+        <SearchFilter value={query.q} placeholder="A plan’s name, words or id" />
+        <SelectFilter
+          label="State"
+          param="state"
+          value={query.state}
+          options={[
+            { value: 'any', label: 'Every plan' },
+            { value: 'active', label: 'On offer' },
+            { value: 'retired', label: 'Retired' },
+          ]}
+          width={160}
+        />
+        <SelectFilter
+          label="Sort"
+          param="sort"
+          value={query.sort}
+          options={[
+            { value: 'shelf', label: 'Library order' },
+            { value: 'newest', label: 'Newest' },
+            { value: 'name', label: 'By name' },
+          ]}
+          width={160}
+        />
+        <SelectFilter
+          label="Rows"
+          param="limit"
+          value={String(query.limit)}
+          options={[10, 25, 50].map(option => ({ value: String(option), label: `${option} plans` }))}
+          width={130}
+        />
+      </FilterBar>
+
       <Panel
-        title={`${number(plans.length)} plan${plans.length === 1 ? '' : 's'}`}
+        title={
+          library.total === library.totals.plans
+            ? `${number(library.total)} plan${library.total === 1 ? '' : 's'}`
+            : `${number(library.total)} of ${number(library.totals.plans)} plans`
+        }
         subtitle="Days run in rotation, so a 3-day plan repeats every third day"
         action={<AddPlanButton />}
-        note="A plan is written and read whole: saving replaces the entire programme, which is what makes “change Tuesday” one edit with one result rather than a sequence of calls that can half-fail."
+        note="A plan is written and read whole: saving replaces the entire programme, which is what makes “change Tuesday” one edit with one result rather than a sequence of calls that can half-fail. Ten a page, because a plan carries every meal of every day of itself."
         dense
       >
         <DataTable
@@ -167,10 +226,15 @@ export async function DietPlansView() {
               ],
             };
           })}
-          empty="No plans yet — add the first one."
+          empty={
+            query.q || query.state !== 'any' ? 'No plan matches those filters.' : 'No plans yet — add the first one.'
+          }
         />
+        <OffsetPager total={library.total} offset={library.offset} limit={library.limit} />
       </Panel>
 
+      {/* The first three of this page, written out day by day — paging the
+          library above is also how an operator reaches the rest. */}
       {plans.slice(0, 3).map(plan => (
         <Panel
           key={plan.id}

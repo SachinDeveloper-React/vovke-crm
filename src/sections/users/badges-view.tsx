@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
 import { Label } from '@/src/components/label';
-import { DataTable, Mono, Panel, Stat } from '@/src/components/ui';
+import { DataTable, Mono, OffsetPager, Panel, SelectFilter, Stat } from '@/src/components/ui';
 import { GrantBadgeForm } from './badge-form';
 import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, date as formatDate, humanise, number, percent } from '@/src/lib/format';
@@ -21,14 +21,32 @@ import type { Badge, MemberAchievements } from '@/src/lib/types';
  * and whether badge coins are switched on yet, because a badge that unlocked
  * while they were off is a payment still owed.
  */
-export async function MemberBadgesView({ userId }: { userId: string }) {
+export type MemberBadgesQuery = {
+  state: string;
+  limit: number;
+  offset: number;
+  challengeLimit: number;
+  challengeOffset: number;
+};
+
+export async function MemberBadgesView({ userId, query }: { userId: string; query: MemberBadgesQuery }) {
   const zone = await memberZone(userId);
 
-  const report = await adminGet<MemberAchievements>(`/admin/users/${encodeURIComponent(userId)}/achievements`);
-  const { summary, badges, challenges } = report;
+  const report = await adminGet<MemberAchievements>(
+    `/admin/users/${encodeURIComponent(userId)}/achievements`,
+    {
+      state: query.state || 'any',
+      limit: query.limit,
+      offset: query.offset,
+      challengeLimit: query.challengeLimit,
+      challengeOffset: query.challengeOffset,
+    },
+  );
+  const { summary, badges, challenges, locked, challengePage } = report;
 
-  const unlocked = badges.filter(badge => badge.unlocked);
-  const locked = badges.filter(badge => !badge.unlocked);
+  // Of the whole shelf, not of this page of it — the server counts both.
+  const stillToEarn = summary.total - summary.unlocked;
+  const newest = badges.find(badge => badge.unlocked) ?? null;
 
   return (
     <Stack spacing={3}>
@@ -65,18 +83,31 @@ export async function MemberBadgesView({ userId }: { userId: string }) {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Stat
             label="Newest badge"
-            value={unlocked[0] ? ago(unlocked[0].unlockedAt) : 'none yet'}
+            value={newest ? ago(newest.unlockedAt) : 'none yet'}
             icon="solar:star-bold-duotone"
             goodDirection="none"
-            hint={unlocked[0]?.title ?? 'nothing on the shelf'}
+            hint={newest?.title ?? 'nothing held on this page'}
           />
         </Grid>
       </Grid>
 
       <Panel
         title="The shelf"
-        subtitle={`${number(unlocked.length)} held, ${number(locked.length)} still to earn`}
-        note="`via` is what unlocked it: the badge's own rule, or the challenge that pays it. A badge is never taken back."
+        subtitle={`${number(summary.unlocked)} held, ${number(stillToEarn)} still to earn · showing ${number(badges.length)}`}
+        note="`via` is what unlocked it: the badge's own rule, or the challenge that pays it. A badge is never taken back. The shelf grows with the badge catalogue, so it is paged — the two filters are the questions support is actually asked."
+        action={
+          <SelectFilter
+            label="Show"
+            param="state"
+            value={query.state}
+            options={[
+              { value: 'any', label: 'The whole shelf' },
+              { value: 'held', label: 'Only what they hold' },
+              { value: 'unheld', label: 'Only what they do not' },
+            ]}
+            width={200}
+          />
+        }
       >
         <Grid container spacing={2}>
           {badges.map(badge => (
@@ -87,9 +118,14 @@ export async function MemberBadgesView({ userId }: { userId: string }) {
         </Grid>
         {badges.length === 0 && (
           <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-            No badge has been defined yet — the shelf itself is seeded content.
+            {query.state === 'held'
+              ? 'They hold nothing on the shelf yet.'
+              : query.state === 'unheld'
+                ? 'They hold every badge there is.'
+                : 'No badge has been defined yet — the shelf itself is seeded content.'}
           </Typography>
         )}
+        <OffsetPager total={report.total} offset={report.offset} limit={report.limit} />
       </Panel>
 
       <Panel
@@ -102,7 +138,7 @@ export async function MemberBadgesView({ userId }: { userId: string }) {
 
       <Panel
         title="Challenge periods they finished"
-        subtitle="And what each one actually paid"
+        subtitle={`${number(challengePage.total)} finished · ${coins(summary.challengeCoinsPaid)} coins paid in all`}
         note="`granted` is less than the reward where the daily ceiling bit, and zero while step-derived rewards wait for step coins — which is what `unpaid` means here."
         dense
       >
@@ -154,6 +190,15 @@ export async function MemberBadgesView({ userId }: { userId: string }) {
             ],
           }))}
           empty="This member has not finished a challenge period yet."
+        />
+        {/* One row per period they have ever finished: a two-year account on
+            a daily challenge has seven hundred, which is why this is paged
+            rather than cut off at the first hundred. */}
+        <OffsetPager
+          total={challengePage.total}
+          offset={challengePage.offset}
+          limit={challengePage.limit}
+          param="challengeOffset"
         />
       </Panel>
     </Stack>

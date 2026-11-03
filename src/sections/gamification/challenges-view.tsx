@@ -3,11 +3,22 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Kv, Mono, Panel, Stat, TextLink } from '@/src/components/ui';
+import {
+  DataTable,
+  FilterBar,
+  Kv,
+  Mono,
+  OffsetPager,
+  Panel,
+  SearchFilter,
+  SelectFilter,
+  Stat,
+  TextLink,
+} from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, coins, number } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { Achievements, Challenges, ChallengeState } from '@/src/lib/types';
+import type { AchievementPicker, Challenges, ChallengeState } from '@/src/lib/types';
 
 import { AddChallengeButton, ChallengeRowActions } from './challenge-forms';
 
@@ -39,21 +50,40 @@ const UNITS: Record<string, string> = {
  * not paid is the daily ceiling or the coins switch rather than the
  * challenge, and the banner above says which of those is off.
  */
-export async function ChallengesView() {
-  const [challenges, achievements] = await Promise.all([
-    adminGet<Challenges>('/admin/challenges'),
-    adminGet<Achievements>('/admin/achievements'),
-  ]);
-  const { data, totals, config, metrics, cadences } = challenges;
-  const badges = achievements.data;
+export type ChallengesQuery = {
+  q: string;
+  state: string;
+  cadence: string;
+  sort: string;
+  limit: number;
+  offset: number;
+};
 
-  const unpaid = data.filter(entry => entry.completions.unpaid > 0);
-  const broken = data.filter(entry => entry.badgeMissing);
+export async function ChallengesView({ query }: { query: ChallengesQuery }) {
+  const [challenges, badges] = await Promise.all([
+    adminGet<Challenges>('/admin/challenges', {
+      q: query.q,
+      state: query.state || 'any',
+      cadence: query.cadence || undefined,
+      sort: query.sort,
+      limit: query.limit,
+      offset: query.offset,
+    }),
+    /**
+     * The badge shelf by name alone, for the dropdown on the form.
+     *
+     * Not the Achievements list: that one is paged and carries who holds
+     * each badge and what pays it, and a picker that offered page one of it
+     * would be a form that cannot reach half the shelf.
+     */
+    adminGet<AchievementPicker>('/admin/achievements/picker'),
+  ]);
+  const { data, totals, config, metrics, cadences, attention } = challenges;
 
   return (
     <Stack spacing={3}>
       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
-        <AddChallengeButton badges={badges} metrics={metrics} cadences={cadences} />
+        <AddChallengeButton badges={badges.data} metrics={metrics} cadences={cadences} />
       </Stack>
 
       <Grid container spacing={3}>
@@ -95,10 +125,56 @@ export async function ChallengesView() {
         </Grid>
       </Grid>
 
+      <FilterBar>
+        <SearchFilter value={query.q} placeholder="Title, description or id" />
+        <SelectFilter
+          label="State"
+          param="state"
+          value={query.state}
+          options={[
+            { value: 'any', label: 'Every state' },
+            { value: 'live', label: 'On the board' },
+            { value: 'upcoming', label: 'Not open yet' },
+            { value: 'ended', label: 'Ended' },
+            { value: 'retired', label: 'Retired' },
+          ]}
+          width={160}
+        />
+        <SelectFilter
+          label="Cadence"
+          param="cadence"
+          value={query.cadence}
+          options={[{ value: '', label: 'Any cadence' }, ...cadences.map(one => ({ value: one, label: one }))]}
+          width={150}
+        />
+        <SelectFilter
+          label="Sort"
+          param="sort"
+          value={query.sort}
+          options={[
+            { value: 'shelf', label: 'Board order' },
+            { value: 'newest', label: 'Newest' },
+            { value: 'title', label: 'By title' },
+          ]}
+          width={150}
+        />
+        <SelectFilter
+          label="Rows"
+          param="limit"
+          value={String(query.limit)}
+          options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+          width={120}
+        />
+      </FilterBar>
+
       <Panel
-        title={`${number(totals.challenges)} challenge${totals.challenges === 1 ? '' : 's'}`}
+        title={
+          challenges.total === totals.challenges
+            ? `${number(totals.challenges)} challenge${totals.challenges === 1 ? '' : 's'}`
+            : `${number(challenges.total)} of ${number(totals.challenges)} challenges`
+        }
         subtitle={`Today is ${config.today} in ${config.timezone}`}
-        action={<AddChallengeButton badges={badges} metrics={metrics} cadences={cadences} />}
+        action={<AddChallengeButton badges={badges.data} metrics={metrics} cadences={cadences} />}
         note="Every member is enrolled in every open challenge, so one added here is on every board at the next fetch. A completion keeps the goal it was judged against, which is why raising a goal is safe mid-period: it changes what today takes, not what yesterday paid."
         dense
       >
@@ -169,14 +245,15 @@ export async function ChallengesView() {
               <ChallengeRowActions
                 key="actions"
                 challenge={challenge}
-                badges={badges}
+                badges={badges.data}
                 metrics={metrics}
                 cadences={cadences}
               />,
             ],
           }))}
-          empty="No challenges yet — add the first one."
+          empty={query.q || query.state !== 'any' || query.cadence ? 'Nothing matches those filters.' : 'No challenges yet — add the first one.'}
         />
+        <OffsetPager total={challenges.total} offset={challenges.offset} limit={challenges.limit} />
       </Panel>
 
       <Panel title="Why a completion might not have paid" subtitle="Before blaming the challenge">
@@ -193,24 +270,28 @@ export async function ChallengesView() {
               hint: '⚙ coins.steps.enabled',
             },
             {
+              // Found by query rather than filtered out of the rows above:
+              // the list is a page now, and "none unpaid" read off one page
+              // of it would be a different sentence from the truth.
               label: 'Unpaid right now',
               value:
-                unpaid.length === 0
+                attention.unpaid.length === 0
                   ? 'none'
-                  : unpaid.map(entry => `${entry.title} (${number(entry.completions.unpaid)})`).join(' · '),
+                  : attention.unpaid.map(entry => `${entry.title} (${number(entry.unpaid)})`).join(' · '),
               hint: 'capped by the daily ceiling, or waiting on a switch above',
             },
             {
               label: 'Badges that are not there',
-              value: broken.length === 0 ? 'none' : broken.map(entry => `${entry.title} → ${entry.badgeId}`).join(' · '),
+              value:
+                attention.badgeMissing.length === 0
+                  ? 'none'
+                  : attention.badgeMissing.map(entry => `${entry.title} → ${entry.badgeId}`).join(' · '),
               hint: 'the challenge pays a badge that has been deleted',
             },
             {
               label: 'The badge shelf',
               value: (
-                <TextLink href={paths.dashboard.achievements}>
-                  {number(badges.length)} badge(s), {number(achievements.totals.unlocked)} unlocked
-                </TextLink>
+                <TextLink href={paths.dashboard.achievements}>{number(badges.total)} badge(s)</TextLink>
               ),
             },
           ]}

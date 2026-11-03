@@ -2,10 +2,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Mono, Panel, SelectFilter } from '@/src/components/ui';
+import { DataTable, Mono, OffsetPager, Panel, SelectFilter } from '@/src/components/ui';
 import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, dateTime, number } from '@/src/lib/format';
-import type { LoginRow, Page } from '@/src/lib/types';
+import type { LoginRow, Paged } from '@/src/lib/types';
 
 /**
  * Every sign-in, newest first, across every install.
@@ -14,15 +14,18 @@ import type { LoginRow, Page } from '@/src/lib/types';
  * step rules are judged against, which is why a period still open reads as
  * "signed in now" rather than as a missing sign-out.
  */
-export async function MemberLogins({ userId, limit }: { userId: string; limit: number }) {
+export async function MemberLogins({ userId, limit, offset }: { userId: string; limit: number; offset: number }) {
   const zone = await memberZone(userId);
 
-  const logins = await adminGet<Page<LoginRow>>(`/admin/users/${encodeURIComponent(userId)}/logins`, { limit });
+  const logins = await adminGet<Paged<LoginRow>>(`/admin/users/${encodeURIComponent(userId)}/logins`, {
+    limit,
+    offset,
+  });
 
   return (
     <Panel
       title="Sign-ins"
-      subtitle={`${number(logins.data.length)} shown of ${number(logins.total ?? logins.data.length)} recorded · newest first`}
+      subtitle={`${number(logins.data.length)} shown of ${number(logins.total)} recorded · newest first`}
       note="A sign-in opens a counting period and a sign-out closes it (D-56). Steps are only counted inside an open period, which is why this list is also the record the step rules are judged against."
       action={
         <SelectFilter
@@ -76,6 +79,7 @@ export async function MemberLogins({ userId, limit }: { userId: string; limit: n
         }))}
         empty="This account has never signed in on a phone."
       />
+      <OffsetPager total={logins.total} offset={logins.offset} limit={logins.limit} />
     </Panel>
   );
 }

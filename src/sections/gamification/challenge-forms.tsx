@@ -19,7 +19,7 @@ import { Iconify } from '@/src/components/iconify/iconify';
 // `server-only` — and pulling that into a client component fails the build.
 import { DialogButton, DialogIconButton } from '@/src/components/ui/dialog-button';
 import { slugify } from '@/src/lib/slug';
-import type { AdminAchievement, AdminChallenge } from '@/src/lib/types';
+import type { AchievementPickerRow, AdminChallenge } from '@/src/lib/types';
 
 import { deleteChallenge, saveChallenge, setChallengeActive, type GamificationActionState } from './actions';
 
@@ -72,7 +72,7 @@ export function ChallengeForm({
   cadences,
 }: {
   challenge?: AdminChallenge;
-  badges: AdminAchievement[];
+  badges: AchievementPickerRow[];
   metrics: string[];
   cadences: string[];
 }) {
@@ -225,9 +225,13 @@ export function ChallengeForm({
             helperText={rewardsBadge ? 'Added on Achievements' : 'Only when it awards one'}
           >
             <MenuItem value="">— none —</MenuItem>
+            {/* The whole shelf by name, from the picker: the Achievements list
+                is paged, and a dropdown showing one page of it would be a
+                form that cannot reach half the badges. */}
             {badges.map(badge => (
               <MenuItem key={badge.id} value={badge.id}>
-                {badge.label} ({badge.members} held)
+                {badge.label}
+                {badge.rewardCoins > 0 ? ` (pays ${badge.rewardCoins})` : ''}
               </MenuItem>
             ))}
           </TextField>
@@ -385,7 +389,7 @@ export function AddChallengeButton({
   metrics,
   cadences,
 }: {
-  badges: AdminAchievement[];
+  badges: AchievementPickerRow[];
   metrics: string[];
   cadences: string[];
 }) {
@@ -411,7 +415,7 @@ export function ChallengeRowActions({
   cadences,
 }: {
   challenge: AdminChallenge;
-  badges: AdminAchievement[];
+  badges: AchievementPickerRow[];
   metrics: string[];
   cadences: string[];
 }) {

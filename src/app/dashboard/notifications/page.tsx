@@ -37,6 +37,8 @@ async function Loader({ search }: { search: Promise<SearchParams> }) {
         days: readNumber(params, 'days', 7, 1, 365),
         limit: readNumber(params, 'limit', 25, 1, 100),
         offset: readNumber(params, 'offset', 0, 0, 100_000),
+        broadcastLimit: readNumber(params, 'broadcastLimit', 25, 1, 100),
+        broadcastOffset: readNumber(params, 'broadcastOffset', 0, 0, 100_000),
       }}
     />
   );

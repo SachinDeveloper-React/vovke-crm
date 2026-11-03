@@ -18,7 +18,7 @@ import Typography from '@mui/material/Typography';
 import { Iconify } from '@/src/components/iconify/iconify';
 import { DialogButton, DialogIconButton } from '@/src/components/ui/dialog-button';
 import { slugify } from '@/src/lib/slug';
-import type { AdminExercise, AdminWorkoutTemplate } from '@/src/lib/types';
+import type { AdminExercise, AdminWorkoutTemplate, ExercisePicker } from '@/src/lib/types';
 
 import {
   deleteExercise,
@@ -245,17 +245,17 @@ export function TemplateForm({
   muscleGroups,
 }: {
   template?: AdminWorkoutTemplate;
-  exercises: AdminExercise[];
+  exercises: ExercisePicker[];
   muscleGroups: string[];
 }) {
   const [state, action, pending] = useActionState<TrainingActionState, FormData>(saveTemplate, {});
   const [title, setTitle] = useState(template?.title ?? '');
   const [slug, setSlug] = useState(template?.id ?? '');
   const [slugTyped, setSlugTyped] = useState(Boolean(template));
-  const [picked, setPicked] = useState<AdminExercise[]>(
+  const [picked, setPicked] = useState<ExercisePicker[]>(
     (template?.exerciseIds ?? [])
       .map(id => exercises.find(exercise => exercise.id === id))
-      .filter((exercise): exercise is AdminExercise => Boolean(exercise)),
+      .filter((exercise): exercise is ExercisePicker => Boolean(exercise)),
   );
   const [groups, setGroups] = useState<string[]>(template?.muscleGroups ?? []);
 
@@ -346,7 +346,7 @@ export function TemplateForm({
             disableCloseOnSelect
             options={exercises}
             value={picked}
-            onChange={(_event, value) => setPicked(value as AdminExercise[])}
+            onChange={(_event, value) => setPicked(value as ExercisePicker[])}
             getOptionLabel={option => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             groupBy={option => option.muscleGroup.replace(/_/g, ' ')}
@@ -480,7 +480,7 @@ export function AddTemplateButton({
   exercises,
   muscleGroups,
 }: {
-  exercises: AdminExercise[];
+  exercises: ExercisePicker[];
   muscleGroups: string[];
 }) {
   return (
@@ -538,7 +538,7 @@ export function TemplateRowActions({
   muscleGroups,
 }: {
   template: AdminWorkoutTemplate;
-  exercises: AdminExercise[];
+  exercises: ExercisePicker[];
   muscleGroups: string[];
 }) {
   return (

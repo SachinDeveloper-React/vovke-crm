@@ -3,7 +3,18 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Kv, Mono, Panel, Stat, TextLink } from '@/src/components/ui';
+import {
+  DataTable,
+  FilterBar,
+  Kv,
+  Mono,
+  OffsetPager,
+  Panel,
+  SearchFilter,
+  SelectFilter,
+  Stat,
+  TextLink,
+} from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, coins, number } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
@@ -24,11 +35,25 @@ import { AchievementRowActions, AddAchievementButton } from './achievement-forms
  * here retires one: changing what it says changes the shelf for everybody,
  * and deleting is refused while anybody holds it.
  */
-export async function AchievementsView() {
-  const achievements = await adminGet<Achievements>('/admin/achievements');
-  const { data, totals, config, metrics, rules } = achievements;
+export type AchievementsQuery = {
+  q: string;
+  state: string;
+  metric: string;
+  sort: string;
+  limit: number;
+  offset: number;
+};
 
-  const unreachable = data.filter(entry => entry.unreachable);
+export async function AchievementsView({ query }: { query: AchievementsQuery }) {
+  const achievements = await adminGet<Achievements>('/admin/achievements', {
+    q: query.q,
+    state: query.state || 'any',
+    metric: query.metric || undefined,
+    sort: query.sort,
+    limit: query.limit,
+    offset: query.offset,
+  });
+  const { data, totals, config, metrics, rules } = achievements;
 
   return (
     <Stack spacing={3}>
@@ -75,8 +100,53 @@ export async function AchievementsView() {
         </Grid>
       </Grid>
 
+      <FilterBar>
+        <SearchFilter value={query.q} placeholder="Label, title or id" />
+        <SelectFilter
+          label="State"
+          param="state"
+          value={query.state}
+          options={[
+            { value: 'any', label: 'Every badge' },
+            { value: 'held', label: 'Somebody holds it' },
+            { value: 'unheld', label: 'Nobody holds it' },
+            { value: 'unreachable', label: 'Nothing unlocks it' },
+          ]}
+          width={190}
+        />
+        <SelectFilter
+          label="Counts"
+          param="metric"
+          value={query.metric}
+          options={[{ value: '', label: 'Any metric' }, ...metrics.map(one => ({ value: one, label: one }))]}
+          width={150}
+        />
+        <SelectFilter
+          label="Sort"
+          param="sort"
+          value={query.sort}
+          options={[
+            { value: 'shelf', label: 'Shelf order' },
+            { value: 'newest', label: 'Newest' },
+            { value: 'label', label: 'By label' },
+          ]}
+          width={150}
+        />
+        <SelectFilter
+          label="Rows"
+          param="limit"
+          value={String(query.limit)}
+          options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+          width={120}
+        />
+      </FilterBar>
+
       <Panel
-        title={`${number(totals.achievements)} badge${totals.achievements === 1 ? '' : 's'}`}
+        title={
+          achievements.total === totals.achievements
+            ? `${number(totals.achievements)} badge${totals.achievements === 1 ? '' : 's'}`
+            : `${number(achievements.total)} of ${number(totals.achievements)} badges`
+        }
         subtitle={config.achievementCoinsEnabled ? 'Badge coins are being paid' : 'Badge coins are off — every payout is held'}
         action={<AddAchievementButton metrics={metrics} rules={rules} />}
         note="A badge is unlocked once and never taken back, so nothing here takes one off a member who earned it: deleting is refused while anybody holds it, and raising a threshold only changes what the next member has to do."
@@ -153,16 +223,31 @@ export async function AchievementsView() {
               <AchievementRowActions key="actions" achievement={badge} metrics={metrics} rules={rules} />,
             ],
           }))}
-          empty="No badges yet — add the first one."
+          empty={
+            query.q || query.state !== 'any' || query.metric
+              ? 'Nothing matches those filters.'
+              : 'No badges yet — add the first one.'
+          }
         />
+        <OffsetPager total={achievements.total} offset={achievements.offset} limit={achievements.limit} />
       </Panel>
 
       <Panel title="What to do about the ones nothing unlocks" subtitle="A badge nobody can earn still sits on the shelf">
         <Kv
           items={[
             {
+              // A link to the filter rather than a list read off one page:
+              // the shelf is paged, and "none" counted from the twenty-five
+              // on screen would be a different sentence from the truth.
               label: 'Unreachable',
-              value: unreachable.length === 0 ? 'none' : unreachable.map(badge => badge.label).join(' · '),
+              value:
+                totals.unreachable === 0 ? (
+                  'none'
+                ) : (
+                  <TextLink href={{ pathname: paths.dashboard.achievements, query: { state: 'unreachable' } }}>
+                    {number(totals.unreachable)} badge(s) — list them
+                  </TextLink>
+                ),
               hint: 'give each a rule, or point a challenge at it',
             },
             {

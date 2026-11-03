@@ -162,6 +162,11 @@ export async function NutritionView() {
       <Panel
         title="The plans members are on"
         subtitle={`${number(plans.chosen)} chose one by hand · ${number(plans.serverChoice)} take the server’s choice`}
+        note={
+          plans.total > plans.data.length
+            ? `The ten most chosen of ${number(plans.total)}. The whole library, paged and editable, is Diet plans.`
+            : undefined
+        }
         action={
           <LinkButton href={paths.dashboard.dietPlans} size="small" color="inherit" variant="outlined">
             Edit the plans

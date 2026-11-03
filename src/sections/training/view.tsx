@@ -3,10 +3,22 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Kv, Mono, Panel, Stat } from '@/src/components/ui';
+import {
+  DataTable,
+  FilterBar,
+  Kv,
+  Mono,
+  OffsetPager,
+  Panel,
+  SearchFilter,
+  SelectFilter,
+  Stat,
+  TextLink,
+} from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, number } from '@/src/lib/format';
-import type { Training } from '@/src/lib/types';
+import { paths } from '@/src/layout/paths';
+import type { ExercisePicker, Training } from '@/src/lib/types';
 
 import {
   AddExerciseButton,
@@ -32,17 +44,49 @@ import {
  * its own copy of every exercise and set, so correcting a name or a muscle
  * group fixes the catalogue from now on and leaves the history alone.
  */
-export async function TrainingView() {
-  const training = await adminGet<Training>('/admin/training');
-  const { exercises, templates, totals, muscleGroups, equipment } = training;
+export type TrainingQuery = {
+  exerciseQ: string;
+  muscleGroup: string;
+  equipment: string;
+  exerciseState: string;
+  exerciseLimit: number;
+  exerciseOffset: number;
+  templateQ: string;
+  templateState: string;
+  templateLimit: number;
+  templateOffset: number;
+};
 
-  const broken = templates.filter(template => template.missing.length > 0);
-  const unused = exercises.filter(exercise => exercise.templates.length === 0 && exercise.logged.sessions === 0);
+export async function TrainingView({ query }: { query: TrainingQuery }) {
+  const [training, picker] = await Promise.all([
+    adminGet<Training>('/admin/training', {
+      exerciseQ: query.exerciseQ,
+      muscleGroup: query.muscleGroup || undefined,
+      equipment: query.equipment || undefined,
+      exerciseState: query.exerciseState || 'any',
+      exerciseLimit: query.exerciseLimit,
+      exerciseOffset: query.exerciseOffset,
+      templateQ: query.templateQ,
+      templateState: query.templateState || 'any',
+      templateLimit: query.templateLimit,
+      templateOffset: query.templateOffset,
+    }),
+    /**
+     * The exercise list by name, for the template form.
+     *
+     * A template is built by choosing exercises in order, so that form
+     * needs the whole list — one paged with the table beside it would be a
+     * form that cannot reach half the gym.
+     */
+    adminGet<{ total: number; data: ExercisePicker[] }>('/admin/training/exercises/picker'),
+  ]);
+  const { exercises, templates, totals, muscleGroups, equipment, exercisePage, templatePage } = training;
+  const pickable = picker.data;
 
   return (
     <Stack spacing={3}>
       <Stack direction="row" spacing={1} sx={{ justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1 }}>
-        <AddTemplateButton exercises={exercises} muscleGroups={muscleGroups} />
+        <AddTemplateButton exercises={pickable} muscleGroups={muscleGroups} />
         <AddExerciseButton muscleGroups={muscleGroups} equipment={equipment} />
       </Stack>
 
@@ -85,10 +129,42 @@ export async function TrainingView() {
         </Grid>
       </Grid>
 
+      <FilterBar>
+        <SearchFilter
+          value={query.templateQ}
+          placeholder="A workout’s title or id"
+          param="templateQ"
+          resets="templateOffset"
+        />
+        <SelectFilter
+          label="Workouts"
+          param="templateState"
+          value={query.templateState}
+          options={[
+            { value: 'any', label: 'Every workout' },
+            { value: 'broken', label: 'Ones the app drops' },
+          ]}
+          width={190}
+          resets="templateOffset"
+        />
+        <SelectFilter
+          label="Rows"
+          param="templateLimit"
+          value={String(query.templateLimit)}
+          options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+          width={120}
+          resets="templateOffset"
+        />
+      </FilterBar>
+
       <Panel
-        title={`${number(totals.templates)} workout${totals.templates === 1 ? '' : 's'}`}
+        title={
+          templatePage.total === totals.templates
+            ? `${number(totals.templates)} workout${totals.templates === 1 ? '' : 's'}`
+            : `${number(templatePage.total)} of ${number(totals.templates)} workouts`
+        }
         subtitle="The order the exercises are listed in is the order they are done in"
-        action={<AddTemplateButton exercises={exercises} muscleGroups={muscleGroups} />}
+        action={<AddTemplateButton exercises={pickable} muscleGroups={muscleGroups} />}
         note="A template carries whole exercises to the app, so one naming an exercise that has gone is dropped on the phone rather than shown with a gap. That is what the “missing” tag is, and why an exercise a template uses cannot be deleted."
         dense
       >
@@ -133,15 +209,80 @@ export async function TrainingView() {
                   </Label>
                 )}
               </Stack>,
-              <TemplateRowActions key="a" template={template} exercises={exercises} muscleGroups={muscleGroups} />,
+              <TemplateRowActions key="a" template={template} exercises={pickable} muscleGroups={muscleGroups} />,
             ],
           }))}
-          empty="No workouts yet — add an exercise or two, then build one."
+          empty={
+            query.templateQ || query.templateState !== 'any'
+              ? 'No workout matches those filters.'
+              : 'No workouts yet — add an exercise or two, then build one.'
+          }
+        />
+        <OffsetPager
+          total={templatePage.total}
+          offset={templatePage.offset}
+          limit={templatePage.limit}
+          param="templateOffset"
         />
       </Panel>
 
+      <FilterBar>
+        <SearchFilter
+          value={query.exerciseQ}
+          placeholder="An exercise’s name or id"
+          param="exerciseQ"
+          resets="exerciseOffset"
+        />
+        <SelectFilter
+          label="Works"
+          param="muscleGroup"
+          value={query.muscleGroup}
+          options={[
+            { value: '', label: 'Any muscle group' },
+            ...muscleGroups.map(group => ({ value: group, label: group.replace(/_/g, ' ') })),
+          ]}
+          width={180}
+          resets="exerciseOffset"
+        />
+        <SelectFilter
+          label="Equipment"
+          param="equipment"
+          value={query.equipment}
+          options={[
+            { value: '', label: 'Any equipment' },
+            ...equipment.map(kit => ({ value: kit, label: kit.replace(/_/g, ' ') })),
+          ]}
+          width={170}
+          resets="exerciseOffset"
+        />
+        <SelectFilter
+          label="Use"
+          param="exerciseState"
+          value={query.exerciseState}
+          options={[
+            { value: 'any', label: 'Every exercise' },
+            { value: 'logged', label: 'Somebody has done it' },
+            { value: 'unused', label: 'Nobody uses it' },
+          ]}
+          width={190}
+          resets="exerciseOffset"
+        />
+        <SelectFilter
+          label="Rows"
+          param="exerciseLimit"
+          value={String(query.exerciseLimit)}
+          options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+          width={120}
+          resets="exerciseOffset"
+        />
+      </FilterBar>
+
       <Panel
-        title={`${number(totals.exercises)} exercise${totals.exercises === 1 ? '' : 's'}`}
+        title={
+          exercisePage.total === totals.exercises
+            ? `${number(totals.exercises)} exercise${totals.exercises === 1 ? '' : 's'}`
+            : `${number(exercisePage.total)} of ${number(totals.exercises)} exercises`
+        }
         subtitle="What members pick from, and what the templates are built out of"
         action={<AddExerciseButton muscleGroups={muscleGroups} equipment={equipment} />}
         dense
@@ -198,7 +339,17 @@ export async function TrainingView() {
               <ExerciseRowActions key="a" exercise={exercise} muscleGroups={muscleGroups} equipment={equipment} />,
             ],
           }))}
-          empty="No exercises yet — add the first one."
+          empty={
+            query.exerciseQ || query.muscleGroup || query.equipment || query.exerciseState !== 'any'
+              ? 'No exercise matches those filters.'
+              : 'No exercises yet — add the first one.'
+          }
+        />
+        <OffsetPager
+          total={exercisePage.total}
+          offset={exercisePage.offset}
+          limit={exercisePage.limit}
+          param="exerciseOffset"
         />
       </Panel>
 
@@ -206,16 +357,30 @@ export async function TrainingView() {
         <Kv
           items={[
             {
+              // Both lists are a filter away rather than named here: each
+              // table is a page now, and a list read off one page would say
+              // "none" while six were broken on page three.
               label: 'Templates the app drops',
               value:
-                broken.length === 0
-                  ? 'none'
-                  : broken.map(template => `${template.title} → ${template.missing.join(', ')}`).join(' · '),
+                totals.broken === 0 ? (
+                  'none'
+                ) : (
+                  <TextLink href={{ pathname: paths.dashboard.workouts, query: { templateState: 'broken' } }}>
+                    {number(totals.broken)} workout(s) — list them
+                  </TextLink>
+                ),
               hint: 'edit the template and take the missing exercise out, or add an exercise with that id',
             },
             {
               label: 'Exercises nobody uses',
-              value: unused.length === 0 ? 'none' : unused.map(exercise => exercise.name).join(' · '),
+              value:
+                totals.unused === 0 ? (
+                  'none'
+                ) : (
+                  <TextLink href={{ pathname: paths.dashboard.workouts, query: { exerciseState: 'unused' } }}>
+                    {number(totals.unused)} exercise(s) — list them
+                  </TextLink>
+                ),
               hint: 'in no template and in nobody’s log — typed and forgotten, or waiting for a workout',
             },
             {

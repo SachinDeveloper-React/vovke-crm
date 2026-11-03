@@ -30,6 +30,9 @@ export type NotificationsQuery = {
   days: number;
   limit: number;
   offset: number;
+  /** The broadcast list below the feed is its own list, so its own pager. */
+  broadcastLimit: number;
+  broadcastOffset: number;
 };
 
 const TOPICS = [
@@ -77,7 +80,10 @@ export async function NotificationsView({ query }: { query: NotificationsQuery }
       limit: query.limit,
       offset: query.offset,
     }),
-    adminTry<Broadcasts>('/admin/notifications/broadcasts', { limit: 25 }),
+    adminTry<Broadcasts>('/admin/notifications/broadcasts', {
+      limit: query.broadcastLimit,
+      offset: query.broadcastOffset,
+    }),
     adminTry<NotificationConsent>('/admin/notifications/consent'),
   ]);
   const { totals, byTopic, data } = feed;
@@ -269,10 +275,10 @@ export async function NotificationsView({ query }: { query: NotificationsQuery }
         </Panel>
       )}
 
-      {'data' in broadcasts && broadcasts.data.data.length > 0 && (
+      {'data' in broadcasts && broadcasts.data.total > 0 && (
         <Panel
           title="Broadcasts"
-          subtitle="What was sent to a segment, and what became of it"
+          subtitle={`${number(broadcasts.data.total)} sent to a segment, newest first`}
           note="The tally on the left is what the send itself reported; the open rate on the right is what it could not know. A retraction removes only the rows nobody has opened."
           dense
         >
@@ -327,6 +333,12 @@ export async function NotificationsView({ query }: { query: NotificationsQuery }
               ],
             }))}
             empty="No broadcast has been sent."
+          />
+          <OffsetPager
+            total={broadcasts.data.total}
+            offset={broadcasts.data.offset}
+            limit={broadcasts.data.limit}
+            param="broadcastOffset"
           />
         </Panel>
       )}

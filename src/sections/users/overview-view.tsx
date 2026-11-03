@@ -4,11 +4,11 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { BoolChip, DataTable, Evidence, Kv, LinkButton, Mono, Panel, SelectFilter, SeverityChip } from '@/src/components/ui';
+import { BoolChip, DataTable, Evidence, Kv, LinkButton, Mono, OffsetPager, Panel, SelectFilter, SeverityChip } from '@/src/components/ui';
 import { adminTry, memberOverview, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, deviceLabel, humanise, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
-import type { AuditRow, Page, ProblemReport } from '@/src/lib/types';
+import type { AuditRow, Paged, ProblemReport } from '@/src/lib/types';
 
 import { StatusForm, VerifyContactForm } from './money-forms';
 
@@ -18,13 +18,24 @@ import { StatusForm, VerifyContactForm } from './money-forms';
  * wallet and the orders look like — and, at the top, whether anything is
  * wrong, because that is what the conversation is usually about.
  */
-export async function MemberOverview({ userId, auditLimit = 20 }: { userId: string; auditLimit?: number }) {
+export async function MemberOverview({
+  userId,
+  auditLimit = 20,
+  auditOffset = 0,
+}: {
+  userId: string;
+  auditLimit?: number;
+  auditOffset?: number;
+}) {
   const zone = await memberZone(userId);
 
   const [overview, problems, audit] = await Promise.all([
     memberOverview(userId),
     adminTry<ProblemReport>(`/admin/users/${encodeURIComponent(userId)}/problems`),
-    adminTry<Page<AuditRow>>(`/admin/users/${encodeURIComponent(userId)}/audit`, { limit: auditLimit }),
+    adminTry<Paged<AuditRow>>(`/admin/users/${encodeURIComponent(userId)}/audit`, {
+      limit: auditLimit,
+      offset: auditOffset,
+    }),
   ]);
   const { account, activity, wallet, orders, counts, installs } = overview;
 
@@ -248,7 +259,11 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
         <Grid size={{ xs: 12, lg: 7 }}>
           <Panel
             title="Everything done to this account"
-            subtitle="Operators and the member, newest first"
+            subtitle={
+              'data' in audit
+                ? `${number(audit.data.total)} entr${audit.data.total === 1 ? 'y' : 'ies'} · operators and the member, newest first`
+                : 'Operators and the member, newest first'
+            }
             note="The panel's own receipt: a verdict, a re-score, a goal set, a message sent, a freeze, a coin adjustment — and the member's own sign-ups and verifications beside them."
             action={
               <SelectFilter
@@ -257,6 +272,7 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
                 value={String(auditLimit)}
                 options={[20, 50, 100, 200].map(option => ({ value: String(option), label: `${option} rows` }))}
                 width={130}
+                resets="auditOffset"
               />
             }
             dense
@@ -298,6 +314,14 @@ export async function MemberOverview({ userId, auditLimit = 20 }: { userId: stri
                   ],
                 }))}
                 empty="Nothing has been done to this account yet."
+              />
+            )}
+            {'data' in audit && (
+              <OffsetPager
+                total={audit.data.total}
+                offset={audit.data.offset}
+                limit={audit.data.limit}
+                param="auditOffset"
               />
             )}
           </Panel>

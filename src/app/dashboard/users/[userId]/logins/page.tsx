@@ -28,5 +28,11 @@ async function Loader({
   search: Promise<SearchParams>;
 }) {
   const [{ userId }, query] = await Promise.all([params, search]);
-  return <MemberLogins userId={userId} limit={readNumber(query, 'limit', 50, 1, 200)} />;
+  return (
+    <MemberLogins
+      userId={userId}
+      limit={readNumber(query, 'limit', 50, 1, 200)}
+      offset={readNumber(query, 'offset', 0, 0, 100_000)}
+    />
+  );
 }

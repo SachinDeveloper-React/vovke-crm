@@ -33,6 +33,28 @@ export interface Page<T> {
   limit?: number;
 }
 
+/**
+ * A page of a list that knows how many it has — what `OffsetPager` draws.
+ *
+ * The three fields are not optional here on purpose: a pager that has to
+ * guess the total counts the rows it was handed and says "25 of 25" on
+ * every page of a thousand.
+ */
+export interface Paged<T> {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  nextCursor: string | null;
+}
+
+/** Where a second list on the same page is — see `OffsetPager`'s `param`. */
+export interface PageWindow {
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 // ─── GET /admin/users ──────────────────────────────────────────────────────
 
 export interface UserRow {
@@ -408,10 +430,8 @@ export interface FraudQueueRow {
   activeDays: number;
 }
 
-export interface FraudQueue {
+export interface FraudQueue extends Paged<FraudQueueRow> {
   days: number;
-  data: FraudQueueRow[];
-  nextCursor: string | null;
 }
 
 export interface FraudFlag {
@@ -529,12 +549,22 @@ export interface UpdatePolicy {
   laterLabel: string;
 }
 
-export interface ReleasesResponse {
+export interface ReleasesResponse extends Paged<ReleaseRow> {
   minVersion: Record<Platform, string>;
   storeUrl: Record<Platform, string> | Record<string, string>;
   nudgeOnNewer: boolean;
-  data: ReleaseRow[];
-  nextCursor: string | null;
+  /** What each store is serving, whichever page of the list this is. */
+  current: Record<Platform, { version: string; build: string } | null>;
+  /** Of every build there is, whatever this page is showing. */
+  totals: {
+    releases: number;
+    current: number;
+    supported: number;
+    deprecated: number;
+    blocked: number;
+    /** Builds the version gate would refuse today — every request answers 426. */
+    refused: number;
+  };
 }
 
 export interface UpdatePolicyResult {
@@ -1012,7 +1042,15 @@ export interface MemberAchievements {
     challengesCompleted: number;
     challengeCoinsPaid: number;
   };
+  /** A page of the shelf: how many the filters match, and where it starts. */
+  total: number;
+  limit: number;
+  offset: number;
   badges: Badge[];
+  /** Every badge they do not hold, for the grant-by-hand form. */
+  locked: AchievementPickerRow[];
+  /** And a page of the periods they finished — `challengeOffset`. */
+  challengePage: PageWindow;
   challenges: {
     id: string;
     challengeId: string;
@@ -1392,6 +1430,10 @@ export interface AdminLeaderboard {
     paidPlacesFilled: number;
     ranked: number;
   };
+  /** A page of the live standings. `offset` is places, so rank survives it. */
+  total: number;
+  limit: number;
+  offset: number;
   standings: {
     rank: number;
     userId: string;
@@ -1417,6 +1459,10 @@ export interface AdminLeaderboard {
     /** Owed by the ladder but not credited — the step-rewards switch. */
     coinsOwed: number;
     excluded: number;
+    /** How many places the week paid anything to, of which `winners` is a page. */
+    winnersTotal: number;
+    winnerLimit: number;
+    winnerOffset: number;
     winners: {
       rank: number;
       userId: string;
@@ -2021,9 +2067,7 @@ export interface BroadcastRow {
   retractable: number;
 }
 
-export interface Broadcasts {
-  data: BroadcastRow[];
-}
+export type Broadcasts = Paged<BroadcastRow>;
 
 export interface RetractResult {
   retracted: true;
@@ -2352,10 +2396,11 @@ export interface ChallengeConfig {
   today: string;
 }
 
-export interface Challenges {
+export interface Challenges extends Paged<AdminChallenge> {
   metrics: string[];
   cadences: string[];
   config: ChallengeConfig;
+  /** Of the whole shelf, whatever this page is showing. */
   totals: {
     challenges: number;
     live: number;
@@ -2365,7 +2410,17 @@ export interface Challenges {
     granted: number;
     unpaid: number;
   };
-  data: AdminChallenge[];
+  /**
+   * The two answers to "why has a completion not paid", found by query.
+   *
+   * Both used to be a filter over the whole list, which a page cannot do —
+   * and both are the sort of thing an operator wants named rather than
+   * counted, so each is a handful of rows and capped at a dozen.
+   */
+  attention: {
+    unpaid: { id: string; title: string; unpaid: number }[];
+    badgeMissing: { id: string; title: string; badgeId: string }[];
+  };
 }
 
 export interface ChallengeResult {
@@ -2401,12 +2456,31 @@ export interface AdminAchievement {
   updatedAt: string | null;
 }
 
-export interface Achievements {
+export interface Achievements extends Paged<AdminAchievement> {
   metrics: string[];
   rules: string[];
   config: { achievementCoinsEnabled: boolean };
+  /** Of the whole shelf, whatever this page is showing. */
   totals: { achievements: number; unlocked: number; unreachable: number; coinsOnOffer: number };
-  data: AdminAchievement[];
+}
+
+/**
+ * The badge shelf by name alone.
+ *
+ * A challenge's badge dropdown needs every badge to choose from, which the
+ * paged list cannot give it — `GET /admin/achievements/picker` is the same
+ * shelf with three fields per row and no joins.
+ */
+export interface AchievementPickerRow {
+  id: string;
+  label: string;
+  title: string;
+  rewardCoins: number;
+}
+
+export interface AchievementPicker {
+  total: number;
+  data: AchievementPickerRow[];
 }
 
 export interface AchievementResult {
@@ -2495,6 +2569,18 @@ export interface AdminPlan {
   updatedAt: string | null;
 }
 
+/**
+ * A page of the library.
+ *
+ * Paged more tightly than the rest (ten a page): a plan carries every day of
+ * itself with every meal inside it, so twenty plans are a payload a browser
+ * has to parse before it draws anything.
+ */
+export interface AdminPlans extends Paged<AdminPlan> {
+  /** Of every plan there is, whatever this page is showing. */
+  totals: { plans: number; active: number; days: number };
+}
+
 // ─── GET /admin/nutrition/overview (RULES N4) ──────────────────────────────
 
 export interface NutritionOverview {
@@ -2505,6 +2591,11 @@ export interface NutritionOverview {
     /** Members who picked a plan by hand; the rest take the server's choice (N10). */
     chosen: number;
     serverChoice: number;
+    /**
+     * The ten plans members are actually on, most chosen first. The whole
+     * library, paged and editable, is the Diet plans page; this says which
+     * of them is carrying the members.
+     */
     data: { id: string; name: string; active: boolean; days: number; members: number }[];
   };
   members: {
@@ -2559,10 +2650,23 @@ export interface AdminWorkoutTemplate {
 export interface Training {
   muscleGroups: string[];
   equipment: string[];
+  /** Of the whole gym, whatever these two pages are showing. */
   totals: { exercises: number; templates: number; broken: number; unused: number; sessions: number };
+  /** Two lists, two pagers: `exerciseOffset` and `templateOffset`. */
+  exercisePage: PageWindow;
+  templatePage: PageWindow;
   exercises: AdminExercise[];
   templates: AdminWorkoutTemplate[];
 }
+
+/**
+ * The exercise list by name alone.
+ *
+ * A template is built by choosing exercises in order, so that form needs the
+ * whole list rather than a page of it — `GET /admin/training/exercises/picker`
+ * is the same collection with four fields per row and no joins.
+ */
+export type ExercisePicker = Pick<AdminExercise, 'id' | 'name' | 'muscleGroup' | 'equipment' | 'isTimed'>;
 
 export interface TrainingResult extends Training {
   created?: boolean;

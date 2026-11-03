@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
 import { coins } from '@/src/lib/format';
-import type { Badge } from '@/src/lib/types';
+import type { AchievementPickerRow } from '@/src/lib/types';
 
 import { grantBadge, type MoneyActionState } from './money-actions';
 
@@ -25,7 +25,20 @@ import { grantBadge, type MoneyActionState } from './money-actions';
  * the attempt. What it is worth is on the option, because badge coins wait on
  * their own switch and an operator should know which they are promising.
  */
-export function GrantBadgeForm({ userId, locked, rewardsEnabled }: { userId: string; locked: Badge[]; rewardsEnabled: boolean }) {
+export function GrantBadgeForm({
+  userId,
+  locked,
+  rewardsEnabled,
+}: {
+  userId: string;
+  /**
+   * Every badge they do not hold, by name alone — not the page of the shelf
+   * beside this form. A dropdown offering one page of it would be a form
+   * that cannot give half the badges there are.
+   */
+  locked: AchievementPickerRow[];
+  rewardsEnabled: boolean;
+}) {
   const [state, action, pending] = useActionState<MoneyActionState, FormData>(grantBadge, {});
 
   if (locked.length === 0) {

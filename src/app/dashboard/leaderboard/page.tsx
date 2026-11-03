@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 
 import { PageHeader, PageSkeleton } from '@/src/components/ui';
 import { DashboardContent } from '@/src/layout/dashboard/main';
-import { readString, type SearchParams } from '@/src/lib/search-params';
+import { readNumber, readString, type SearchParams } from '@/src/lib/search-params';
 import { LeaderboardView } from '@/src/sections/leaderboard/view';
 
 export const metadata = { title: 'Leaderboard · Vokve Admin' };
@@ -23,5 +23,15 @@ export default function Page({ searchParams }: { searchParams: Promise<SearchPar
 
 async function Loader({ search }: { search: Promise<SearchParams> }) {
   const params = await search;
-  return <LeaderboardView query={{ country: readString(params, 'country') }} />;
+  return (
+    <LeaderboardView
+      query={{
+        country: readString(params, 'country'),
+        limit: readNumber(params, 'limit', 25, 1, 100),
+        offset: readNumber(params, 'offset', 0, 0, 100_000),
+        winnerLimit: readNumber(params, 'winnerLimit', 20, 1, 100),
+        winnerOffset: readNumber(params, 'winnerOffset', 0, 0, 100_000),
+      }}
+    />
+  );
 }

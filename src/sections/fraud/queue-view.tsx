@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import { RankedBars } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
-import { DataTable, DaysFilter, FilterBar, LinkButton, Mono, Panel, RowLink, SelectFilter, Stat, TrustChip } from '@/src/components/ui';
+import { DataTable, DaysFilter, FilterBar, LinkButton, Mono, OffsetPager, Panel, RowLink, SelectFilter, Stat, TrustChip } from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, coins, humanise, number, percent, shortId } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
@@ -23,13 +23,15 @@ export async function FraudQueueView({
   severity,
   days,
   limit,
+  offset,
 }: {
   status: string;
   severity: string;
   days: number;
   limit: number;
+  offset: number;
 }) {
-  const queue = await adminGet<FraudQueue>('/admin/fraud/queue', { status, severity, days, limit });
+  const queue = await adminGet<FraudQueue>('/admin/fraud/queue', { status, severity, days, limit, offset });
 
   const accounts = queue.data;
   const held = accounts.reduce((sum, row) => sum + row.heldCoins, 0);
@@ -75,16 +77,22 @@ export async function FraudQueueView({
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="Accounts in the queue" value={number(accounts.length)} goodDirection="down" icon="solar:users-group-two-rounded-bold-duotone" />
+          <Stat
+            label="Accounts in the queue"
+            value={number(queue.total)}
+            goodDirection="down"
+            icon="solar:users-group-two-rounded-bold-duotone"
+            hint={queue.total > accounts.length ? `${number(accounts.length)} on this page` : undefined}
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="Hard flags" value={number(hard)} goodDirection="down" icon="solar:shield-cross-bold-duotone" hint="A hard flag refuses the day on its own" />
+          <Stat label="Hard flags" value={number(hard)} goodDirection="down" icon="solar:shield-cross-bold-duotone" hint="On this page. A hard flag refuses the day on its own" />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="Still open" value={number(open)} goodDirection="down" icon="solar:hourglass-bold-duotone" hint="An open flag keeps costing them trust" />
+          <Stat label="Still open" value={number(open)} goodDirection="down" icon="solar:hourglass-bold-duotone" hint="On this page. An open flag keeps costing them trust" />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Stat label="Coins in escrow" value={coins(held)} icon="solar:lock-bold-duotone" hint="What confirmations would void" />
+          <Stat label="Coins in escrow" value={coins(held)} icon="solar:lock-bold-duotone" hint="On this page — what confirmations would void" />
         </Grid>
       </Grid>
 
@@ -182,13 +190,14 @@ export async function FraudQueueView({
                   : 'No flag matches these filters.'
               }
             />
+            <OffsetPager total={queue.total} offset={queue.offset} limit={queue.limit} labels={['More serious', 'Less serious']} />
           </Panel>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
           <Panel
             title="What they were flagged for"
-            subtitle="Accounts per kind, in this window"
+            subtitle="Accounts per kind, on this page"
             note="A genuine phone failing a layer is a threshold to look at, not a cheat — which is why the queue counts accounts rather than flags."
           >
             <RankedBars

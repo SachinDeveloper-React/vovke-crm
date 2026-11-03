@@ -79,6 +79,7 @@ export async function MemberOrdersView({
               })),
             ]}
             width={160}
+            resets="cursor"
           />
         }
         dense

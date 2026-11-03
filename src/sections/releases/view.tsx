@@ -3,10 +3,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Kv, Panel, ReleaseStatusChip, Stat } from '@/src/components/ui';
+import { DataTable, FilterBar, Kv, OffsetPager, Panel, ReleaseStatusChip, SelectFilter, Stat } from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, dateTime, number } from '@/src/lib/format';
-import type { Platform, ReleasesResponse } from '@/src/lib/types';
+import type { ReleasesResponse } from '@/src/lib/types';
 
 import { NewReleaseForm, UpdatePolicyForm } from './forms';
 
@@ -19,11 +19,16 @@ import { NewReleaseForm, UpdatePolicyForm } from './forms';
  * release cannot accidentally lock anybody out, and a wall is never a side
  * effect of shipping.
  */
-export async function ReleasesView() {
-  const releases = await adminGet<ReleasesResponse>('/admin/releases');
+export type ReleasesQuery = { platform: string; status: string; limit: number; offset: number };
+
+export async function ReleasesView({ query }: { query: ReleasesQuery }) {
+  const releases = await adminGet<ReleasesResponse>('/admin/releases', {
+    platform: query.platform || undefined,
+    status: query.status || 'any',
+    limit: query.limit,
+    offset: query.offset,
+  });
   const rows = releases.data;
-  const refused = rows.filter(row => row.refused);
-  const current = (platform: Platform) => rows.find(row => row.platform === platform && row.status === 'current');
 
   return (
     <Stack spacing={3}>
@@ -33,7 +38,7 @@ export async function ReleasesView() {
             label="iOS in force"
             value={releases.minVersion.ios}
             icon="solar:apple-bold-duotone"
-            hint={`store is serving ${current('ios')?.version ?? 'nothing recorded'}`}
+            hint={`store is serving ${releases.current.ios?.version ?? 'nothing recorded'}`}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -41,13 +46,13 @@ export async function ReleasesView() {
             label="Android in force"
             value={releases.minVersion.android}
             icon="solar:android-bold-duotone"
-            hint={`store is serving ${current('android')?.version ?? 'nothing recorded'}`}
+            hint={`store is serving ${releases.current.android?.version ?? 'nothing recorded'}`}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Stat
             label="Builds walled off"
-            value={number(refused.length)}
+            value={number(releases.totals.refused)}
             goodDirection="none"
             icon="solar:lock-bold-duotone"
             hint="Below their platform's minimum — every request answers 426"
@@ -64,10 +69,48 @@ export async function ReleasesView() {
         </Grid>
       </Grid>
 
+      <FilterBar>
+        <SelectFilter
+          label="Platform"
+          param="platform"
+          value={query.platform}
+          options={[
+            { value: '', label: 'Both' },
+            { value: 'ios', label: 'iOS' },
+            { value: 'android', label: 'Android' },
+          ]}
+          width={140}
+        />
+        <SelectFilter
+          label="Status"
+          param="status"
+          value={query.status}
+          options={[
+            { value: 'any', label: 'Every status' },
+            { value: 'current', label: 'Current' },
+            { value: 'supported', label: 'Supported' },
+            { value: 'deprecated', label: 'Deprecated' },
+            { value: 'blocked', label: 'Blocked' },
+          ]}
+          width={170}
+        />
+        <SelectFilter
+          label="Rows"
+          param="limit"
+          value={String(query.limit)}
+          options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+          width={120}
+        />
+      </FilterBar>
+
       <Panel
         title="Every build the server knows about"
-        subtitle={`${number(rows.length)} recorded`}
-        note="“Refused” is what the version gate would do to that build today, not a status somebody set."
+        subtitle={
+          releases.total === releases.totals.releases
+            ? `${number(releases.total)} recorded`
+            : `${number(releases.total)} of ${number(releases.totals.releases)} recorded`
+        }
+        note="“Refused” is what the version gate would do to that build today, not a status somebody set. A release row is written for every build and never removed, so this list is paged — the whole history is behind the pager rather than in one answer."
         dense
       >
         <DataTable
@@ -113,6 +156,7 @@ export async function ReleasesView() {
           }))}
           empty="No release has been recorded. The app will knock at nobody until one is."
         />
+        <OffsetPager total={releases.total} offset={releases.offset} limit={releases.limit} />
       </Panel>
 
       <Grid container spacing={3}>

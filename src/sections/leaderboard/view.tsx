@@ -7,6 +7,7 @@ import {
   DataTable,
   FilterBar,
   Mono,
+  OffsetPager,
   Panel,
   SelectFilter,
   Stat,
@@ -19,7 +20,15 @@ import type { AdminLeaderboard } from '@/src/lib/types';
 
 import { LadderForm, ScoringForm, WordsForm } from './board-forms';
 
-export type LeaderboardQuery = { country: string };
+export type LeaderboardQuery = {
+  country: string;
+  /** A page of the live standings — places, so a rank survives paging. */
+  limit: number;
+  offset: number;
+  /** And a page of the closed week's winners, which is a list of its own. */
+  winnerLimit: number;
+  winnerOffset: number;
+};
 
 /**
  * The weekly board: what it pays, who is standing in the paid places, and
@@ -48,7 +57,10 @@ export type LeaderboardQuery = { country: string };
 export async function LeaderboardView({ query }: { query: LeaderboardQuery }) {
   const board = await adminGet<AdminLeaderboard>('/admin/leaderboard', {
     country: query.country || undefined,
-    limit: 25,
+    limit: query.limit,
+    offset: query.offset,
+    winnerLimit: query.winnerLimit,
+    winnerOffset: query.winnerOffset,
   });
   const { config, preview, period, totals, standings, lastClosed } = board;
 
@@ -111,6 +123,10 @@ export async function LeaderboardView({ query }: { query: LeaderboardQuery }) {
           value={query.country}
           options={board.countries.map(country => ({ value: country, label: country }))}
           width={140}
+          // Another country is another week in another zone: both lists on
+          // this page start again rather than keeping a place that was in
+          // India's standings.
+          resets={['offset', 'winnerOffset']}
         />
       </FilterBar>
 
@@ -174,7 +190,7 @@ export async function LeaderboardView({ query }: { query: LeaderboardQuery }) {
 
       <Panel
         title={`This week · ${period.id}`}
-        subtitle={`${number(totals.ranked)} scoring in ${board.scope}, top ${number(standings.length)} shown`}
+        subtitle={`${number(totals.ranked)} scoring in ${board.scope} · places ${number(board.offset + 1)}–${number(board.offset + standings.length)}`}
         note="What each place would take if the week closed as it stands. Nothing here is paid until the close."
         dense
       >
@@ -224,6 +240,12 @@ export async function LeaderboardView({ query }: { query: LeaderboardQuery }) {
             ],
           }))}
           empty="Nobody has scored this week yet."
+        />
+        <OffsetPager
+          total={board.total}
+          offset={board.offset}
+          limit={board.limit}
+          labels={['Higher places', 'Lower places']}
         />
       </Panel>
 
@@ -317,6 +339,13 @@ export async function LeaderboardView({ query }: { query: LeaderboardQuery }) {
                 ],
               }))}
               empty="Nobody won anything last week."
+            />
+            <OffsetPager
+              total={lastClosed.winnersTotal}
+              offset={lastClosed.winnerOffset}
+              limit={lastClosed.winnerLimit}
+              param="winnerOffset"
+              labels={['Higher places', 'Lower places']}
             />
           </Stack>
         </Panel>

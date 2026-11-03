@@ -1,7 +1,7 @@
 export { ApiErrorNotice } from './api-error';
 export { BoolChip, FlagStatusChip, OrderStatusChip, PermissionChip, ReleaseStatusChip, SeverityChip, TrustChip } from './chips';
 export { Evidence, Mono } from './evidence';
-export { CursorPager, DaysFilter, FilterBar, OffsetPager, SearchFilter, SelectFilter, useParamNav } from './filters';
+export { CursorPager, DaysFilter, FilterBar, OffsetPager, SearchFilter, SelectFilter, useParamNav, type Resets } from './filters';
 export { Kv, type KvItem } from './kv';
 export { LinkButton, TextLink } from './nav';
 export { PageHeader } from './page-header';

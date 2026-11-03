@@ -4,7 +4,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import { Label } from '@/src/components/label';
-import { DataTable, Kv, Mono, Panel, PermissionChip, Stat, TextLink } from '@/src/components/ui';
+import { CursorPager, DataTable, Kv, Mono, Panel, PermissionChip, SelectFilter, Stat, TextLink } from '@/src/components/ui';
 import { adminGet, memberZone } from '@/src/lib/api';
 import { ago, coins, dateTime, hours, humanise, number } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
@@ -21,12 +21,24 @@ import { MemberNotificationPrefsForm, MemberStepsForm, NudgeForm, SendMessageFor
  * support actually has to *do*: ask a phone to sync, and tell them
  * something.
  */
-export async function MemberConfigView({ userId }: { userId: string }) {
+export type MemberConfigQuery = { limit: number; cursor: string };
+
+export async function MemberConfigView({ userId, query }: { userId: string; query: MemberConfigQuery }) {
   const zone = await memberZone(userId);
 
   const [config, feed] = await Promise.all([
     adminGet<MemberConfig>(`/admin/users/${encodeURIComponent(userId)}/config`),
-    adminGet<Page<MemberNotification>>(`/admin/users/${encodeURIComponent(userId)}/notifications`, { limit: 25 }),
+    /**
+     * Their feed, cursored rather than offset.
+     *
+     * New rows arrive at the top of it — a reminder lands while support is
+     * reading — and an offset would shift the page under them. The cursor
+     * is on a time-ordered id, so it cannot.
+     */
+    adminGet<Page<MemberNotification>>(`/admin/users/${encodeURIComponent(userId)}/notifications`, {
+      limit: query.limit,
+      cursor: query.cursor || undefined,
+    }),
   ]);
 
   const { account, steps, notifications } = config;
@@ -211,6 +223,16 @@ export async function MemberConfigView({ userId }: { userId: string }) {
         title="What they have been told"
         subtitle={`${number(notifications.feed.total)} in the feed · ${number(notifications.feed.unread)} unread`}
         note="The one thing their own copy does not show is what became of the push — a row written and never pushed is the commonest answer to “I was never told”."
+        action={
+          <SelectFilter
+            label="Show"
+            param="limit"
+            value={String(query.limit)}
+            options={[25, 50, 100].map(option => ({ value: String(option), label: `${option} rows` }))}
+            width={130}
+            resets="cursor"
+          />
+        }
         dense
       >
         <DataTable
@@ -277,6 +299,7 @@ export async function MemberConfigView({ userId }: { userId: string }) {
           }))}
           empty="Nothing has ever been sent to this member."
         />
+        <CursorPager next={feed.nextCursor} cursor={query.cursor} />
       </Panel>
 
       {silenced.length > 0 && (

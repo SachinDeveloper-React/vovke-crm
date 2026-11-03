@@ -22,5 +22,11 @@ export default function Page({
 
 async function Loader({ params, search }: { params: Promise<{ userId: string }>; search: Promise<SearchParams> }) {
   const [{ userId }, query] = await Promise.all([params, search]);
-  return <MemberOverview userId={userId} auditLimit={readNumber(query, 'audit', 20, 1, 200)} />;
+  return (
+    <MemberOverview
+      userId={userId}
+      auditLimit={readNumber(query, 'audit', 20, 1, 200)}
+      auditOffset={readNumber(query, 'auditOffset', 0, 0, 100_000)}
+    />
+  );
 }

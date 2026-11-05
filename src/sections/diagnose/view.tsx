@@ -185,13 +185,14 @@ export async function DiagnoseView({ days }: { days: number }) {
           <Panel
             title="Which build is failing"
             subtitle="Active installs beside the faults they have hit"
-            note="Fault groups are distinct faults, not occurrences: twenty members hitting one bug is one group."
+            note="Fault groups are distinct faults, not occurrences: twenty members hitting one bug is one group. Crash-free is the share of a build's installs whose app has not died on it — the figure a rollback is decided on, and it is withheld under twenty installs where one phone would move it by whole points."
             dense
           >
             <DataTable
               columns={[
                 { label: 'Build' },
                 { label: 'Installs', align: 'right' },
+                { label: 'Crash-free', align: 'right' },
                 { label: 'Fault groups', align: 'right' },
                 { label: 'Crashes', align: 'right' },
                 { label: 'Members hit', align: 'right' },
@@ -204,6 +205,17 @@ export async function DiagnoseView({ days }: { days: number }) {
                     {row.appVersion}
                   </Typography>,
                   number(row.installs),
+                  row.crashFreeShare === null ? (
+                    '—'
+                  ) : (
+                    <Label
+                      key="crashfree"
+                      color={row.crashFreeShare >= 0.995 ? 'success' : row.crashFreeShare >= 0.98 ? 'warning' : 'error'}
+                      variant="soft"
+                    >
+                      {percent(row.crashFreeShare, 2)}
+                    </Label>
+                  ),
                   number(row.errorGroups),
                   row.fatalGroups > 0 ? (
                     <Label key="fatal" color="error" variant="soft">

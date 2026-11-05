@@ -295,6 +295,44 @@ export interface AppErrorRow {
   stack: string | null;
 }
 
+/** What the phone has queued that is not steps, and how old the queue is. */
+export interface OutboxHealth {
+  nutrition?: number;
+  hydration?: number;
+  vitals?: number;
+  oldestQueuedAt?: string | null;
+}
+
+/** The phone's clock against the server's. */
+export interface ClockHealth {
+  skewMs?: number;
+  timezone?: string | null;
+}
+
+/** How reachable the phone has been since its last report. */
+export interface NetworkHealth {
+  type?: string | null;
+  reachable?: boolean | null;
+  offlineMs?: number;
+  offlineSince?: string | null;
+}
+
+/**
+ * Whether a push to this install actually landed.
+ *
+ * `delivered` is null until there is something to answer about: an install
+ * that has never been pushed is neither reachable nor unreachable, and
+ * drawing it either way would be an invention.
+ */
+export interface PushHealth {
+  reachable: boolean;
+  lastAckAt: string | null;
+  lastAckType: string | null;
+  lastAckState: string | null;
+  lastDeliveryMs: number | null;
+  delivered: boolean | null;
+}
+
 export interface DeviceHealth {
   devices: {
     deviceId: string;
@@ -307,12 +345,16 @@ export interface DeviceHealth {
     revoked: boolean;
     signedIn: boolean;
     stepSync: { uploadedAt: string | null; nudgedAt: string | null; remindedAt: string | null };
+    push: PushHealth;
     health: {
       at: string | null;
       stale: boolean;
       tracking: TrackingHealth | null;
       healthConnect: HealthConnectHealth | null;
       sync: SyncHealth | null;
+      outbox: OutboxHealth | null;
+      clock: ClockHealth | null;
+      network: NetworkHealth | null;
     } | null;
   }[];
   errors: { total: number; data: AppErrorRow[] };
@@ -356,6 +398,10 @@ export interface FleetReport {
     errorGroups: number;
     fatalGroups: number;
     affectedUsers: number;
+    /** Members whose app died on this build — a native crash, an ANR, a kill. */
+    crashedUsers: number;
+    /** The share that did not crash. Null under a handful of installs. */
+    crashFreeShare: number | null;
   }[];
   topErrors: {
     fingerprint: string;

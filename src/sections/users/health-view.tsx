@@ -38,6 +38,14 @@ export async function MemberHealth({ userId, errors }: { userId: string; errors:
         const tracking = report?.tracking;
         const hc = report?.healthConnect;
         const sync = report?.sync;
+        const outbox = report?.outbox;
+        const clock = report?.clock;
+        const network = report?.network;
+        // Minutes, because the question is never "is this phone a second
+        // out" — it is whether its days and its reminders land where the
+        // member expects them to.
+        const skewMinutes = clock?.skewMs === undefined ? null : Math.round(clock.skewMs / 60_000);
+        const queued = (outbox?.nutrition ?? 0) + (outbox?.hydration ?? 0) + (outbox?.vitals ?? 0);
         return (
           <Panel
             key={device.deviceId}
@@ -67,6 +75,16 @@ export async function MemberHealth({ userId, errors }: { userId: string; errors:
                     sync failing
                   </Label>
                 )}
+                {device.push.delivered === false && (
+                  <Label color="error" variant="soft">
+                    push not landing
+                  </Label>
+                )}
+                {skewMinutes !== null && Math.abs(skewMinutes) >= 5 && (
+                  <Label color="warning" variant="soft">
+                    clock {skewMinutes > 0 ? 'ahead' : 'behind'} {Math.abs(skewMinutes)}m
+                  </Label>
+                )}
               </Stack>
             }
             note={
@@ -84,6 +102,24 @@ export async function MemberHealth({ userId, errors }: { userId: string; errors:
                   items={[
                     { label: 'Last snapshot accepted', value: ago(device.stepSync.uploadedAt), hint: dateTime(device.stepSync.uploadedAt, zone) },
                     { label: 'Last pushed to sync', value: ago(device.stepSync.nudgedAt) },
+                    {
+                      // The only field that separates "nothing reached the
+                      // phone" from "it reached the phone and nothing
+                      // happened" — one is the member's to fix, the other
+                      // is ours.
+                      label: 'That push landed',
+                      value:
+                        device.push.delivered === null ? (
+                          '—'
+                        ) : (
+                          <BoolChip value={device.push.delivered} yes="yes" no="never acknowledged" />
+                        ),
+                      hint:
+                        device.push.lastDeliveryMs === null
+                          ? undefined
+                          : `${duration(device.push.lastDeliveryMs)} after the send`,
+                    },
+                    { label: 'Last heard a push', value: ago(device.push.lastAckAt), hint: device.push.lastAckState ?? undefined },
                     { label: 'Last told in words', value: ago(device.stepSync.remindedAt) },
                     { label: 'Revoked', value: device.revoked ? 'yes' : 'no' },
                   ]}
@@ -144,6 +180,61 @@ export async function MemberHealth({ userId, errors }: { userId: string; errors:
                     ))}
                   </Stack>
                 )}
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Waiting to leave the phone
+                </Typography>
+                <Kv
+                  items={[
+                    { label: 'Meals queued', value: number(outbox?.nutrition ?? null) },
+                    { label: 'Drinks queued', value: number(outbox?.hydration ?? null) },
+                    { label: 'Readings queued', value: number(outbox?.vitals ?? null) },
+                    {
+                      // The age, not the depth, is the fault. Forty items on
+                      // a phone that has been in a basement since lunch is
+                      // the app working; four since Tuesday is a queue that
+                      // will never drain on its own.
+                      label: 'Queued since',
+                      value: queued === 0 ? 'nothing waiting' : ago(outbox?.oldestQueuedAt),
+                      hint: outbox?.oldestQueuedAt ? dateTime(outbox.oldestQueuedAt, zone) : undefined,
+                    },
+                  ]}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                  Its clock and its network
+                </Typography>
+                <Kv
+                  items={[
+                    {
+                      label: 'Clock against ours',
+                      value:
+                        skewMinutes === null
+                          ? '—'
+                          : skewMinutes === 0
+                            ? 'in step'
+                            : `${Math.abs(skewMinutes)}m ${skewMinutes > 0 ? 'ahead' : 'behind'}`,
+                      hint: clock?.timezone ?? undefined,
+                    },
+                    { label: 'Interface', value: network?.type ?? '—' },
+                    {
+                      // Connected and unreachable is the captive portal — a
+                      // gym's wifi that joins and then swallows every
+                      // request. It looks like a dead server from the app.
+                      label: 'Reaches the internet',
+                      value: <BoolChip value={network?.reachable ?? null} yes="yes" no="joined but blocked" />,
+                    },
+                    {
+                      label: 'Offline since last report',
+                      value: network?.offlineMs ? duration(network.offlineMs) : 'not at all',
+                      hint: network?.offlineSince ? `offline now, since ${dateTime(network.offlineSince, zone)}` : undefined,
+                    },
+                  ]}
+                />
               </Grid>
             </Grid>
           </Panel>

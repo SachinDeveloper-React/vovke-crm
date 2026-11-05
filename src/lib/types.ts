@@ -2719,3 +2719,26 @@ export interface TrainingResult extends Training {
   deleted?: true;
   id?: string;
 }
+
+// ─── The catalogue's image library (RULES R19) ─────────────────────────────
+
+export interface MediaAsset {
+  id: string;
+  key: string;
+  url: string;
+  /** What it was called when it was chosen — what a sheet matches on. */
+  filename: string;
+  kind: string;
+  contentType: string;
+  bytes: number;
+  uploadedAt: string | null;
+}
+
+/** Where the browser may put one file, and what it must send as its type. */
+export interface SignedUpload {
+  key: string;
+  uploadUrl: string;
+  contentType: string;
+  /** Where it will be readable once it lands — not before. */
+  url: string;
+}

@@ -61,6 +61,15 @@ export function ImportProductsForm() {
         number and the reason. <b>.xlsx</b> and <b>.csv</b> both work.
       </Typography>
 
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+        The <b>images</b> column takes <b>filenames</b>, not pictures — <code>bottle-750.jpg</code>, separated by
+        commas for a gallery. Upload them once under <b>Images</b> and the importer matches the column against what is
+        there, ignoring case. A full <code>https://…</code> URL works too, for photos already hosted somewhere. A name
+        that matches nothing <b>stops that row</b> rather than writing the product without its picture, and the dry run
+        tells you which name before anything is saved. Do not paste images into the sheet itself: a spreadsheet anchors
+        a picture to a position rather than to a row, so they drift the moment anybody sorts.
+      </Typography>
+
       <Link
         href="/api/example-sheets/products"
         underline="hover"

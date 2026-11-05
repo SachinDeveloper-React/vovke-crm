@@ -57,6 +57,7 @@ export const paths = {
     economy: `${ROOTS.DASHBOARD}/economy`,
     /** The shelf: what is on it, and how each thing may be bought. */
     catalogue: `${ROOTS.DASHBOARD}/catalogue`,
+    media: `${ROOTS.DASHBOARD}/media`,
     /** One product in full: its fields, its sales, who wants it, what they said. */
     catalogueItem: (itemId: string) => `${ROOTS.DASHBOARD}/catalogue/${encodeURIComponent(itemId)}` as const,
     /**

@@ -76,6 +76,12 @@ export const navData: NavGroupData[] = [
         caption: 'Items, prices, coins or money, stock',
       },
       {
+        title: 'Images',
+        path: paths.dashboard.media,
+        icon: <Iconify icon="solar:gallery-bold-duotone" />,
+        caption: 'Upload once, name them in a sheet',
+      },
+      {
         title: 'Categories',
         path: paths.dashboard.categories,
         icon: <Iconify icon="solar:widget-4-bold-duotone" />,

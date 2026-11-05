@@ -6,11 +6,13 @@ import Typography from '@mui/material/Typography';
 import { ColumnChart } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
 import { DataTable, DaysFilter, FilterBar, Kv, Panel, Stat, TextLink } from '@/src/components/ui';
-import { adminGet, memberZone } from '@/src/lib/api';
+import { adminGet, memberOverview, memberZone } from '@/src/lib/api';
 import { paths } from '@/src/layout/paths';
-import { ago, date as formatDate, dateTime, humanise, number, percent } from '@/src/lib/format';
+import { ago, date as formatDate, dateTime, deviceLabel, humanise, number, percent } from '@/src/lib/format';
 import type { MemberSteps } from '@/src/lib/types';
 
+import { LiveStepsPanel } from './live-steps-panel';
+import { reachOfAll } from './reach';
 import { SourceChips, SourceName, statusOf } from './step-sources';
 
 /**
@@ -25,8 +27,25 @@ import { SourceChips, SourceName, statusOf } from './step-sources';
 export async function MemberStepsView({ userId, days }: { userId: string; days: number }) {
   const zone = await memberZone(userId);
 
-  const report = await adminGet<MemberSteps>(`/admin/users/${encodeURIComponent(userId)}/steps`, { days });
+  // The overview is already cached for this request by `memberZone`, so the
+  // installs cost nothing extra.
+  const [overview, report] = await Promise.all([
+    memberOverview(userId),
+    adminGet<MemberSteps>(`/admin/users/${encodeURIComponent(userId)}/steps`, { days }),
+  ]);
   const { window, goal, totals, streak, bySource, last, byDay, data } = report;
+
+  // Reachability is worked out here rather than on a client whose clock may
+  // be minutes out, and read against one instant for every install.
+  const reach = reachOfAll(overview.installs).map((verdict, index) => {
+    const install = overview.installs[index];
+    return {
+      ...verdict,
+      label: deviceLabel(install.device),
+      appVersion: install.app.version,
+      lastActiveAt: install.lastActiveAt,
+    };
+  });
 
   const chart = byDay.map(day => ({
     date: day.localDay,
@@ -36,6 +55,10 @@ export async function MemberStepsView({ userId, days }: { userId: string; days: 
 
   return (
     <Stack spacing={3}>
+      {/* First, because it is the only thing on this page that is about now:
+          everything under it is what has already been counted and scored. */}
+      <LiveStepsPanel userId={userId} installs={reach} zone={zone} />
+
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         spacing={2}

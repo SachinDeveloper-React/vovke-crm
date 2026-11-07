@@ -7,6 +7,11 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormGroup from '@mui/material/FormGroup';
+import FormHelperText from '@mui/material/FormHelperText';
+import FormLabel from '@mui/material/FormLabel';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
@@ -42,6 +47,14 @@ export function Said({ state }: { state: FoodActionState }) {
  * logged meal keeps its own copy of the macros, which is the whole reason
  * an operator can fix a wrong calorie count without a migration.
  */
+/** The four diets, in the order the app's own labels run. */
+const DIETS = [
+  { value: 'vegan', label: 'Vegan' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'eggetarian', label: 'Eggetarian' },
+  { value: 'non_vegetarian', label: 'Non-vegetarian' },
+];
+
 export function FoodForm({ food }: { food?: AdminFood }) {
   const [state, action, pending] = useActionState<FoodActionState, FormData>(saveFood, {});
 
@@ -79,6 +92,47 @@ export function FoodForm({ food }: { food?: AdminFood }) {
         </Grid>
         <Grid size={{ xs: 12, sm: 2 }}>
           <TextField name="emoji" label="Emoji" size="small" fullWidth defaultValue={food?.emoji ?? '🍽️'} disabled={pending} />
+        </Grid>
+
+        <Grid size={12}>
+          <TextField
+            name="imageUrl"
+            label="Photo URL"
+            size="small"
+            fullWidth
+            defaultValue={food?.imageUrl ?? ''}
+            disabled={pending}
+            helperText="Upload it under Images and paste the URL here. Left empty the emoji stands in, which is a perfectly good label for a boiled egg."
+          />
+        </Grid>
+
+        <Grid size={12}>
+          <FormControl component="fieldset" disabled={pending}>
+            <FormLabel component="legend" sx={{ typography: 'caption' }}>
+              Suits these diets
+            </FormLabel>
+            <FormGroup row>
+              {DIETS.map(diet => (
+                <FormControlLabel
+                  key={diet.value}
+                  control={
+                    <Checkbox
+                      name="dietTypes"
+                      value={diet.value}
+                      size="small"
+                      defaultChecked={food?.dietTypes?.includes(diet.value) ?? false}
+                    />
+                  }
+                  label={<Typography variant="body2">{diet.label}</Typography>}
+                />
+              ))}
+            </FormGroup>
+            <FormHelperText>
+              Tick nothing and it suits everyone — which is what rice, an apple or dal actually are. Tick only
+              what some diet would refuse. This is what stops a suggestion putting chicken in front of a
+              vegetarian, so an untagged meat dish is the one mistake worth checking for.
+            </FormHelperText>
+          </FormControl>
         </Grid>
 
         <Grid size={{ xs: 6, sm: 2.4 }}>

@@ -52,6 +52,11 @@ export async function saveFood(_previous: FoodActionState, form: FormData): Prom
     name,
     portion: text(form, 'portion') || '1 serving',
     emoji: text(form, 'emoji') || undefined,
+    // Empty clears it, which is how a photograph is taken back off.
+    imageUrl: text(form, 'imageUrl') || null,
+    // Each diet is its own checkbox, so an unticked form means "suits
+    // everyone" rather than "nobody" — which is what an empty list is.
+    dietTypes: form.getAll('dietTypes').map(String).filter(Boolean),
     calories,
     ...nutrients(form),
     quickAdd: flag(form, 'quickAdd'),

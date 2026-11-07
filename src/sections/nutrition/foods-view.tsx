@@ -138,6 +138,26 @@ export async function FoodsView({ query }: { query: FoodsQuery }) {
                       retired
                     </Label>
                   )}
+                  {/* Shown on the row because the mistake worth catching is
+                      an *untagged* one: a food nobody tagged suits everyone,
+                      which is right for rice and wrong for mutton, and the
+                      only way to spot it is to see the whole list at once. */}
+                  {food.dietTypes.length === 0 ? (
+                    <Label color="default" variant="soft">
+                      suits everyone
+                    </Label>
+                  ) : (
+                    food.dietTypes.map(diet => (
+                      <Label key={diet} color="warning" variant="soft">
+                        {diet.replace('_', '-')}
+                      </Label>
+                    ))
+                  )}
+                  {food.imageUrl && (
+                    <Label color="success" variant="soft">
+                      photo
+                    </Label>
+                  )}
                 </Stack>
                 <Mono>{food.id}</Mono>
               </Stack>,

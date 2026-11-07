@@ -2554,6 +2554,10 @@ export interface AdminFood {
   name: string;
   portion: string;
   emoji: string;
+  /** A library image, or null where the emoji still stands in (RULES R18). */
+  imageUrl: string | null;
+  /** Which diets it suits. Empty suits everyone (RULES N12). */
+  dietTypes: string[];
   calories: number;
   proteinG: number;
   carbsG: number;

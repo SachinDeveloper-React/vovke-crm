@@ -13,6 +13,29 @@ import type { LedgerRow, MemberWallet, Page } from '@/src/lib/types';
 import { AdjustCoinsForm } from './money-forms';
 
 /**
+ * Whether a row paid for a day other than the one it landed on.
+ *
+ * Amber rather than plain, because this is the row an operator is looking
+ * for when a member asks why four challenges paid at once: a phone that
+ * closed its day at midnight and uploaded at breakfast, or a watch that
+ * backfilled a fortnight, settles several days inside one minute. Each is a
+ * correct per-day payment and the pile of them is what looks wrong, so the
+ * day each one is *for* has to be readable without parsing the reference.
+ */
+function isLate(row: LedgerRow, zone: string): boolean {
+  if (!row.earnedFor || !row.createdAt) return false;
+  const at = new Date(row.createdAt);
+  if (Number.isNaN(at.getTime())) return false;
+  // On the member's own clock, not the panel's and not UTC: a period is a
+  // run of *their* local days, and a credit at half past midnight in Kolkata
+  // is still the previous UTC day. Read on the wrong clock this would call
+  // an ordinary same-day payment late, once a night, for every member east
+  // of Greenwich. `en-CA` is the locale that formats as `YYYY-MM-DD`.
+  const creditedOn = new Intl.DateTimeFormat('en-CA', { timeZone: zone }).format(at);
+  return row.earnedFor.end < creditedOn;
+}
+
+/**
  * Every coin in and out (RULES E2).
  *
  * The ledger is append-only: nothing in it was ever edited, and a correction
@@ -209,11 +232,20 @@ export async function MemberCoinsView({
                 {row.amount > 0 ? '+' : ''}
                 {coins(row.amount)}
               </Typography>,
-              <Stack key="ref" spacing={0.25} sx={{ maxWidth: 240 }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {humanise(row.referenceType)}
-                </Typography>
-                <Mono>{row.referenceId}</Mono>
+              <Stack key="ref" spacing={0.5} sx={{ maxWidth: 240 }}>
+                {row.earnedFor && (
+                  <Box>
+                    <Label color={isLate(row, zone) ? 'warning' : 'default'} variant="soft">
+                      {row.earnedFor.label}
+                    </Label>
+                  </Box>
+                )}
+                <Stack spacing={0.25}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {humanise(row.referenceType)}
+                  </Typography>
+                  <Mono>{row.referenceId}</Mono>
+                </Stack>
               </Stack>,
               <Stack key="by" spacing={0.25}>
                 <Typography variant="body2">{row.actor}</Typography>

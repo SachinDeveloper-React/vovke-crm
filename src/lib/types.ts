@@ -1055,6 +1055,13 @@ export interface LedgerRow {
   title: string;
   referenceType: string;
   referenceId: string;
+  /**
+   * The day, or run of days, the coins are *for* — null for a row that is
+   * not about a day. `createdAt` is when the wallet moved, and the two are
+   * days apart whenever a phone or a watch reported late, which is how four
+   * challenge rows for four different days come to land inside two minutes.
+   */
+  earnedFor: { start: string; end: string; label: string } | null;
   actor: string;
   holdId: string | null;
   deviceId: string | null;
@@ -2720,7 +2727,7 @@ export interface TrainingResult extends Training {
   id?: string;
 }
 
-// ─── The catalogue's image library (RULES R19) ─────────────────────────────
+// ─── The catalogue's image library (RULES R18) ─────────────────────────────
 
 export interface MediaAsset {
   id: string;

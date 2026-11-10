@@ -123,7 +123,14 @@ export async function MemberTimelineView({
         </Typography>
         <Mono>{device.deviceId}</Mono>
       </Stack>,
-      number(device.deviceSteps),
+      <Stack key="counted" spacing={0.25}>
+        <Typography variant="body2">{number(device.deviceSteps)}</Typography>
+        {device.gatedSteps > 0 ? (
+          <Typography variant="caption" sx={{ color: 'text.disabled' }}>
+            {number(device.gatedSteps)} held back (vehicle)
+          </Typography>
+        ) : null}
+      </Stack>,
       <Stack key="source" spacing={0.25}>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.5 }}>
           <Typography variant="body2">{sourceOf(device).appName}</Typography>

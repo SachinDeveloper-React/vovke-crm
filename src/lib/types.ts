@@ -2307,6 +2307,13 @@ export type TimelineDevice = {
   deviceId: string;
   name: string;
   deviceSteps: number;
+  /**
+   * Of `deviceSteps`, what the phone's own motion gate held back as a
+   * vehicle's vibration rather than steps. Already out of everything the day
+   * was scored on, so it is why this row's raw count can read higher than
+   * the steps it was counted for. 0 before tracker 2.8.
+   */
+  gatedSteps: number;
   /** Whether this phone's own counter answered for the day, or a Health Connect app did. */
   source: string | null;
   winnerApp: string | null;

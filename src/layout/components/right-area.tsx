@@ -1,5 +1,7 @@
 'use client';
 
+import { useSyncExternalStore } from 'react';
+
 import { useColorScheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -8,6 +10,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
+import { canInstall, canInstallOnServer, promptInstall, subscribeInstall } from '@/src/components/pwa/install-store';
 import { signOut } from '@/src/lib/session';
 
 /**
@@ -19,7 +22,10 @@ import { signOut } from '@/src/lib/session';
  * out when two people disagree about a number.
  */
 export function RightArea({ apiBase, timezone }: { apiBase: string; timezone: string }) {
-  const { mode, setMode } = useColorScheme();
+  const { mode, systemMode, setMode } = useColorScheme();
+  // `system` is a mode too: what is on screen is then the OS's choice.
+  const shown = mode === 'system' ? systemMode : mode;
+  const installable = useSyncExternalStore(subscribeInstall, canInstall, canInstallOnServer);
   const host = (() => {
     try {
       return new URL(apiBase).host;
@@ -50,9 +56,23 @@ export function RightArea({ apiBase, timezone }: { apiBase: string; timezone: st
         </Box>
       </Tooltip>
 
-      <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
-        <IconButton onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')} aria-label="Toggle color scheme">
-          <Iconify icon={mode === 'dark' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone'} />
+      {installable && (
+        <Tooltip title="Install the panel as an app — its own window and icon">
+          <Button
+            size="small"
+            color="inherit"
+            onClick={() => promptInstall()}
+            startIcon={<Iconify icon="solar:download-minimalistic-bold-duotone" />}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+          >
+            Install
+          </Button>
+        </Tooltip>
+      )}
+
+      <Tooltip title={shown === 'dark' ? 'Light mode' : 'Dark mode'}>
+        <IconButton onClick={() => setMode(shown === 'dark' ? 'light' : 'dark')} aria-label="Toggle color scheme">
+          <Iconify icon={shown === 'dark' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone'} />
         </IconButton>
       </Tooltip>
 

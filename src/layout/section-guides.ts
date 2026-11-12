@@ -23,6 +23,8 @@
  * something other than it appears to.
  */
 
+import { matchGuide, type GuideIndexEntry } from './guide-match';
+
 export interface SectionGuide {
   /**
    * The route it belongs to. A `:name` segment matches any one segment, so
@@ -928,47 +930,21 @@ export const sectionGuides: SectionGuide[] = [
   },
 ];
 
-/** The guide index page itself, which needs no guide of its own. */
-const GUIDE_PATH = '/dashboard/guide';
-
 /**
- * The guide for a route, or null where there is none.
- *
- * Matched segment by segment against patterns of the same length, so
- * `/dashboard/users/usr_1/coins` finds the Coins tab rather than the member
- * list — and a pattern is preferred over another of the same length when more
- * of its segments are literal. Length has to be equal rather than a prefix:
- * a member tab must not fall back to the member search's guide, which would
- * tell somebody to search for an account they are already looking at.
+ * The guide for a route, or null where there is none. The matching itself is
+ * in `guide-match.ts`, which the browser loads without this file's text.
  */
 export function guideFor(pathname: string | null | undefined): SectionGuide | null {
-  if (!pathname || pathname === GUIDE_PATH) return null;
-  const segments = pathname.replace(/\/+$/, '').split('/').filter(Boolean);
+  return matchGuide(sectionGuides, pathname);
+}
 
-  let best: SectionGuide | null = null;
-  let bestLiterals = -1;
-
-  for (const guide of sectionGuides) {
-    const pattern = guide.pattern.split('/').filter(Boolean);
-    if (pattern.length !== segments.length) continue;
-
-    let literals = 0;
-    let matches = true;
-    for (let i = 0; i < pattern.length; i += 1) {
-      if (pattern[i].startsWith(':')) continue;
-      if (pattern[i] !== segments[i]) {
-        matches = false;
-        break;
-      }
-      literals += 1;
-    }
-    if (matches && literals > bestLiterals) {
-      best = guide;
-      bestLiterals = literals;
-    }
-  }
-
-  return best;
+/**
+ * Just the route and the one-line question, per page — what the folded card
+ * shows. The dashboard layout hands this to the browser; the rest of a guide
+ * is loaded the first time somebody presses Read.
+ */
+export function guideIndex(): GuideIndexEntry[] {
+  return sectionGuides.map(({ pattern, question }) => ({ pattern, question }));
 }
 
 /** The whole tour, in the sidebar's order — what `/dashboard/guide` reads. */

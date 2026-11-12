@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Reloads the page that was asked for: the moment the network is back, it loads. -->
+    <meta http-equiv="refresh" content="15" />
+    <title>Offline · Vokve Admin</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style>
+      :root { color-scheme: light dark; --bg: #ffffff; --fg: #1c252e; --muted: #637381; --line: #e9ecee; --brand: #00a76f; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #141a21; --fg: #ffffff; --muted: #919eab; --line: #28323d; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--fg);
+        font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+      main { max-width: 420px; text-align: center; }
+      img { width: 56px; height: 56px; }
+      h1 { font-size: 22px; margin: 20px 0 8px; }
+      p { margin: 0 0 12px; color: var(--muted); }
+      a { display: inline-block; margin-top: 12px; padding: 9px 18px; border-radius: 8px; background: var(--brand); color: #fff; font-weight: 600; text-decoration: none; }
+      small { display: block; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon.svg" alt="" />
+      <h1>You’re offline</h1>
+      <p>The panel reads every figure live from the API, so there is nothing it can show without a connection.</p>
+      <p>This page tries again every 15 seconds and opens what you asked for as soon as the network is back.</p>
+      <a href="/dashboard">Try the dashboard</a>
+      <small>Nothing you were editing has been sent. A save that did not go through is not retried on its own.</small>
+    </main>
+  </body>
+</html>

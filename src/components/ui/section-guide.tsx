@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
+import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
@@ -13,7 +14,8 @@ import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 
 import { Iconify } from '../iconify/iconify';
-import { guideFor, type SectionGuide as Guide } from '@/src/layout/section-guides';
+import { matchGuide, type GuideIndexEntry } from '@/src/layout/guide-match';
+import type { SectionGuide as Guide } from '@/src/layout/section-guides';
 import { paths } from '@/src/layout/paths';
 import { TextLink } from './nav';
 
@@ -36,21 +38,50 @@ import { TextLink } from './nav';
  * `NoSsr` boundary and no card that unfolds and folds itself shut a frame
  * later: the server renders it closed because closed is what it always is.
  */
+const GuideIndex = createContext<GuideIndexEntry[]>([]);
+
+/**
+ * Every page's one-line question, handed down by the dashboard layout.
+ *
+ * Only the folded line is needed to draw the card, so only that crosses to
+ * the browser up front; the full text of every guide in the panel used to be
+ * in the bundle of every page. The rest arrives on the first Read.
+ */
+export function GuideIndexProvider({ entries, children }: { entries: GuideIndexEntry[]; children: ReactNode }) {
+  return <GuideIndex.Provider value={entries}>{children}</GuideIndex.Provider>;
+}
+
+/** The whole registry, fetched once, on the first Read anywhere. */
+let registry: Promise<typeof import('@/src/layout/section-guides')> | null = null;
+const loadRegistry = () => (registry ??= import('@/src/layout/section-guides'));
+
 export function SectionGuide() {
-  const guide = guideFor(usePathname());
-  if (!guide) return null;
+  const entry = matchGuide(useContext(GuideIndex), usePathname());
+  if (!entry) return null;
 
   return (
     /* Keyed, so opening the guide on one page does not leave it open on the
        next: the offer starts folded wherever it is made. */
-    <GuideCard key={guide.pattern} guide={guide} />
+    <GuideCard key={entry.pattern} entry={entry} />
   );
 }
 
-function GuideCard({ guide }: { guide: Guide }) {
+function GuideCard({ entry }: { entry: GuideIndexEntry }) {
   const [open, setOpen] = useState(false);
+  const [guide, setGuide] = useState<Guide | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  const toggle = useCallback(() => setOpen(current => !current), []);
+  const toggle = useCallback(() => {
+    setOpen(current => !current);
+    if (guide) return;
+    setFailed(false);
+    loadRegistry()
+      .then(module => setGuide(module.sectionGuides.find(one => one.pattern === entry.pattern) ?? null))
+      .catch(() => {
+        registry = null;
+        setFailed(true);
+      });
+  }, [entry.pattern, guide]);
 
   return (
     <Card
@@ -71,7 +102,7 @@ function GuideCard({ guide }: { guide: Guide }) {
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="subtitle2">What this page is for</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {guide.question}
+            {entry.question}
           </Typography>
         </Box>
         <Button
@@ -89,6 +120,22 @@ function GuideCard({ guide }: { guide: Guide }) {
 
       <Collapse in={open} unmountOnExit>
         <Divider sx={{ borderStyle: 'dashed' }} />
+        {!guide ? (
+          <Stack direction="row" spacing={1.5} sx={{ px: 2.5, py: 2.5, alignItems: 'center' }}>
+            {failed ? (
+              <Typography variant="body2" sx={{ color: 'error.main' }}>
+                The guide could not be loaded — check the connection and press Read again.
+              </Typography>
+            ) : (
+              <>
+                <CircularProgress size={16} />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Opening the guide…
+                </Typography>
+              </>
+            )}
+          </Stack>
+        ) : (
         <Stack spacing={2.5} sx={{ px: 2.5, py: 2.5 }}>
           <Typography variant="body2">{guide.what}</Typography>
 
@@ -120,6 +167,7 @@ function GuideCard({ guide }: { guide: Guide }) {
             .
           </Typography>
         </Stack>
+        )}
       </Collapse>
     </Card>
   );

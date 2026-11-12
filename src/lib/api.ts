@@ -28,6 +28,14 @@ export const ADMIN_COOKIE_MAX_AGE = 12 * 60 * 60;
 export const API_BASE = (process.env.VOKVE_API_URL ?? 'http://localhost:3000/v1').replace(/\/+$/, '');
 
 /**
+ * How long a call may take before the panel gives up on it. Writes get far
+ * longer: a two-thousand-row import or a 5,000-member broadcast is real work,
+ * and cutting one off would leave the operator unsure what happened.
+ */
+const READ_TIMEOUT_MS = 30_000;
+const WRITE_TIMEOUT_MS = 120_000;
+
+/**
  * The zone every date on the dashboard is bucketed in. Sent as
  * `X-Vokve-Timezone`, which is what the API's own request context reads, so a
  * "day" here is the day the operator is living in rather than UTC's.
@@ -81,6 +89,7 @@ async function call<T>(path: string, init: RequestInit, query?: Query, key?: str
   const adminKey = key ?? (await readAdminKey());
   if (!adminKey) throw new ApiError(401, 'NO_ADMIN_KEY', 'Not signed in.');
 
+  const isWrite = (init.method ?? 'GET') !== 'GET';
   let response: Response;
   try {
     response = await fetch(url(path, query), {
@@ -93,8 +102,21 @@ async function call<T>(path: string, init: RequestInit, query?: Query, key?: str
       },
       // Operator data is read to act on. A cached figure is a wrong figure.
       cache: 'no-store',
+      // A hung API used to hang the page with it, with no end and nothing on
+      // screen. Bounded now, so the panel says which side is stuck.
+      signal: init.signal ?? AbortSignal.timeout(isWrite ? WRITE_TIMEOUT_MS : READ_TIMEOUT_MS),
     });
   } catch (cause) {
+    if (cause instanceof DOMException && cause.name === 'TimeoutError') {
+      const seconds = (isWrite ? WRITE_TIMEOUT_MS : READ_TIMEOUT_MS) / 1000;
+      throw new ApiError(
+        504,
+        'API_TIMEOUT',
+        isWrite
+          ? `The API at ${API_BASE} took longer than ${seconds}s to answer. The change may still have gone through — reload the page to check before trying again.`
+          : `The API at ${API_BASE} took longer than ${seconds}s to answer. Try again in a moment.`,
+      );
+    }
     throw new ApiError(
       503,
       'API_UNREACHABLE',

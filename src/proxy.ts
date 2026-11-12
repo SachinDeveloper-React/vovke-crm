@@ -167,6 +167,10 @@ function buildCsp(nonce: string): string {
     `img-src 'self' blob: data: https:`,
     `font-src 'self'`,
     `connect-src 'self'`,
+    // Named outright: with 'strict-dynamic' in script-src, a worker would
+    // otherwise fall back to a source list that ignores 'self'.
+    `worker-src 'self'`,
+    `manifest-src 'self'`,
     `media-src 'self'`,
     `object-src 'none'`,
     `base-uri 'self'`,
@@ -367,7 +371,7 @@ export const config = {
     {
       // Static assets / image optimizer / metadata files skip, prefetch requests bhi skip
       source:
-        '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|sw.js|offline.html|manifest.webmanifest|iconify/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },

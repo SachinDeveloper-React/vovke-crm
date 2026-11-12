@@ -2,17 +2,58 @@
 
 import { useActionState, useState } from 'react';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
+import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
+import { DialogIconButton } from '@/src/components/ui/dialog-button';
 import type { MediaAsset } from '@/src/lib/types';
 
-import { removeMedia, type MediaState } from './actions';
+import { removeMedia, renameMedia, type MediaState } from './actions';
+import { KINDS } from './upload-form';
+
+/** The name a sheet matches on, and the shelf it sits on. The URL never changes. */
+function MediaRenameForm({ asset }: { asset: MediaAsset }) {
+  const [state, action, pending] = useActionState<MediaState, FormData>(renameMedia, {});
+
+  return (
+    <Stack component="form" action={action} spacing={2} sx={{ pt: 1 }}>
+      <input type="hidden" name="id" value={asset.id} />
+      {state.ok && <Alert severity="success" variant="outlined">{state.ok}</Alert>}
+      {state.error && <Alert severity="error" variant="outlined">{state.error}</Alert>}
+      <TextField
+        name="filename"
+        label="Name"
+        size="small"
+        fullWidth
+        required
+        defaultValue={asset.filename}
+        disabled={pending}
+        helperText="What a spreadsheet's image column is matched against"
+        slotProps={{ htmlInput: { maxLength: 160 } }}
+      />
+      <TextField select name="kind" label="Shelf" size="small" fullWidth defaultValue={asset.kind} disabled={pending}>
+        {KINDS.map(kind => (
+          <MenuItem key={kind.value} value={kind.value}>
+            {kind.label}
+          </MenuItem>
+        ))}
+      </TextField>
+      <Box>
+        <Button type="submit" variant="contained" loading={pending} startIcon={<Iconify icon="solar:diskette-bold-duotone" />}>
+          Save
+        </Button>
+      </Box>
+    </Stack>
+  );
+}
 
 /**
  * One image, with the two things anybody came here to do.
@@ -72,6 +113,14 @@ export function MediaCard({ asset }: { asset: MediaAsset }) {
           <Button size="small" onClick={copy} sx={{ flex: 1 }}>
             {copied ? 'Copied' : 'Copy URL'}
           </Button>
+          <DialogIconButton
+            icon="solar:pen-bold-duotone"
+            tooltip={`Rename ${asset.filename}`}
+            title="Rename the image"
+            subtitle="The link stays the same, so every product already showing it keeps showing it."
+          >
+            <MediaRenameForm asset={asset} />
+          </DialogIconButton>
 
           {arming ? (
             <Stack component="form" action={action} direction="row" spacing={0.5}>

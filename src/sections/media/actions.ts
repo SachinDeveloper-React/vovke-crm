@@ -62,3 +62,23 @@ export async function removeMedia(_previous: MediaState, form: FormData): Promis
   revalidatePath(paths.dashboard.media);
   return { ok: 'Removed.' };
 }
+
+/**
+ * Renames one, or moves it to another shelf of the library.
+ *
+ * The filename is what a spreadsheet's image column is matched against, so
+ * this is how `IMG_2041.jpg` becomes the `protein-bar.jpg` the sheet names.
+ * The URL never changes, so nothing already showing it breaks.
+ */
+export async function renameMedia(_previous: MediaState, form: FormData): Promise<MediaState> {
+  const id = String(form.get('id') ?? '').trim();
+  const filename = String(form.get('filename') ?? '').trim();
+  const kind = String(form.get('kind') ?? '').trim();
+  if (!filename) return { error: 'The name cannot be empty — it is what a sheet matches on.' };
+
+  const saved = await adminWrite<MediaAsset>('PUT', `/admin/media/${encodeURIComponent(id)}`, { filename, kind });
+  if (!saved.ok) return { error: saved.error };
+
+  revalidatePath(paths.dashboard.media);
+  return { ok: `Saved as ${saved.data.filename} (${saved.data.kind}).` };
+}

@@ -19,7 +19,7 @@ import { confirmUpload, signUpload } from './actions';
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 5 * 1024 * 1024;
 
-const KINDS = [
+export const KINDS = [
   { value: 'shop', label: 'Shop product' },
   { value: 'food', label: 'Food' },
   { value: 'plan', label: 'Diet plan' },

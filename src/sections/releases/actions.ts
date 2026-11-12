@@ -28,6 +28,7 @@ export async function saveRelease(_previous: ReleaseState, form: FormData): Prom
   const version = String(form.get('version') ?? '').trim();
   const build = String(form.get('build') ?? '').trim();
   const status = String(form.get('status') ?? 'current');
+  const editing = form.get('editing') === 'yes';
 
   if (platform !== 'ios' && platform !== 'android') return { error: 'Pick a platform.' };
   if (!VERSION.test(version)) return { error: 'A version looks like 1.2.3.' };
@@ -38,12 +39,18 @@ export async function saveRelease(_previous: ReleaseState, form: FormData): Prom
     version,
     build,
     status,
-    notes: text(form, 'notes'),
-    minOs: text(form, 'minOs'),
+    // An edit sends the boxes as they stand, so emptying one clears it; a new
+    // release leaves an empty box out.
+    notes: editing ? String(form.get('notes') ?? '').trim() : text(form, 'notes'),
+    minOs: editing ? String(form.get('minOs') ?? '').trim() : text(form, 'minOs'),
+    releasedAt: text(form, 'releasedAt'),
   });
   if (!result.ok) return { error: result.error };
 
   revalidatePath('/dashboard/releases');
+  if (editing) {
+    return { ok: `${platform} ${result.data.version} (${result.data.build}) saved as ${result.data.status}.` };
+  }
   return {
     ok: `${platform} ${result.data.version} (${result.data.build}) recorded as ${result.data.status}. Nobody has been walled off — raise the minimum below to make it mandatory.`,
   };

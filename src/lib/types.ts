@@ -156,6 +156,14 @@ export interface UserOverview {
     dateOfBirth: string | null;
     country: string | null;
     timezone: string | null;
+    /** The rest of what the profile edit changes, as stored. */
+    avatarUrl?: string | null;
+    heightCm?: number | null;
+    weightKg?: number | null;
+    goal?: string | null;
+    activityLevel?: string | null;
+    units?: string | null;
+    weeklyGoalWorkouts?: number | null;
     trust: Trust;
     flags: { frozen: boolean; legalHold: boolean };
     deletion: { scheduledAt: string | null; purgeAt: string | null; reason: string | null };
@@ -1217,6 +1225,18 @@ export interface OrderDetail {
 
 // ─── Status, adjustments and the receipt ───────────────────────────────────
 
+/** `PUT /admin/users/:id/profile` — which fields moved, and the profile after. */
+export interface ProfileResult {
+  changed: string[];
+  profile: {
+    name: string;
+    email: string;
+    phone: string | null;
+    emailVerifiedAt: string | null;
+    phoneVerifiedAt: string | null;
+  };
+}
+
 export interface MemberStatus {
   frozen: boolean;
   legalHold: boolean;
@@ -2044,6 +2064,15 @@ export interface Reviews {
   limit: number;
   summary: { reviews: number; average: number; histogram: { rating: number; reviews: number }[] };
   data: ReviewRow[];
+}
+
+/** `PUT /admin/shop/reviews/:id` */
+export interface ReviewEditResult {
+  id: string;
+  itemId: string;
+  changed: string[];
+  review: { rating: number; title: string | null; body: string; verified: boolean };
+  rating: { average: number; count: number };
 }
 
 export interface ReviewDeleteResult {

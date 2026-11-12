@@ -12,6 +12,7 @@ import { ago, coins, number, rupees } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
 
 import { MemberTabs } from './member-tabs';
+import { EditProfileButton } from './profile-form';
 
 /**
  * Who this is, across every tab: the account, the state it is in, and the
@@ -63,9 +64,10 @@ export async function MemberHeader({ params }: { params: Promise<{ userId: strin
               {account.country ? ` · ${account.country}` : ''}
               {account.timezone ? ` · ${account.timezone}` : ''}
             </Typography>
-            <Box sx={{ mt: 0.5 }}>
+            <Stack direction="row" spacing={1.5} sx={{ mt: 0.75, alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
               <Mono>{account.id}</Mono>
-            </Box>
+              <EditProfileButton account={account} />
+            </Stack>
           </Box>
 
           <Stack

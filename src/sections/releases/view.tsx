@@ -8,7 +8,7 @@ import { adminGet } from '@/src/lib/api';
 import { ago, dateTime, number } from '@/src/lib/format';
 import type { ReleasesResponse } from '@/src/lib/types';
 
-import { NewReleaseForm, UpdatePolicyForm } from './forms';
+import { EditReleaseButton, NewReleaseForm, UpdatePolicyForm } from './forms';
 
 /**
  * The releases, and the line below which a build is refused (RULES DV12).
@@ -37,7 +37,7 @@ export async function ReleasesView({ query }: { query: ReleasesQuery }) {
           <Stat
             label="iOS in force"
             value={releases.minVersion.ios}
-            icon="solar:apple-bold-duotone"
+            icon="solar:smartphone-2-bold-duotone"
             hint={`store is serving ${releases.current.ios?.version ?? 'nothing recorded'}`}
           />
         </Grid>
@@ -45,7 +45,7 @@ export async function ReleasesView({ query }: { query: ReleasesQuery }) {
           <Stat
             label="Android in force"
             value={releases.minVersion.android}
-            icon="solar:android-bold-duotone"
+            icon="solar:smartphone-bold-duotone"
             hint={`store is serving ${releases.current.android?.version ?? 'nothing recorded'}`}
           />
         </Grid>
@@ -122,6 +122,7 @@ export async function ReleasesView({ query }: { query: ReleasesQuery }) {
             { label: 'Gate' },
             { label: 'Notes' },
             { label: 'Released', align: 'right' },
+            { label: '', align: 'right', width: 56 },
           ]}
           rows={rows.map(row => ({
             key: row.id,
@@ -152,6 +153,7 @@ export async function ReleasesView({ query }: { query: ReleasesQuery }) {
                   {dateTime(row.releasedAt)}
                 </Typography>
               </Stack>,
+              <EditReleaseButton key="edit" release={row} />,
             ],
           }))}
           empty="No release has been recorded. The app will knock at nobody until one is."

@@ -21,7 +21,7 @@ import type { Categories, ItemInsight } from '@/src/lib/types';
 
 import { QuickEdit } from './item-forms';
 import { ProductDelete, ProductForm } from './product-forms';
-import { ReviewDelete } from '../reviews/review-forms';
+import { ReviewDelete, ReviewEdit } from '../reviews/review-forms';
 
 /**
  * One product, in full.
@@ -237,7 +237,7 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
             { label: 'Stars', width: 90 },
             { label: 'What they wrote' },
             { label: 'Member' },
-            { label: 'Take it down', width: 260 },
+            { label: 'Edit or take down', width: 300 },
           ]}
           rows={reviews.data.map(review => ({
             key: review.id,
@@ -270,7 +270,10 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
               >
                 {review.member.name || review.authorName}
               </RowLink>,
-              <ReviewDelete key="delete" id={review.id} />,
+              <Stack key="actions" direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                <ReviewEdit review={review} />
+                <ReviewDelete id={review.id} />
+              </Stack>,
             ],
           }))}
           empty="No reviews yet."

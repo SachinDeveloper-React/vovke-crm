@@ -184,7 +184,7 @@ export const navData: NavGroupData[] = [
       {
         title: 'Quotes & tips',
         path: paths.dashboard.quotes,
-        icon: <Iconify icon="solar:quote-up-square-bold-duotone" />,
+        icon: <Iconify icon="solar:quote-square-bold-duotone" />,
         caption: 'The lines each screen says',
       },
       {

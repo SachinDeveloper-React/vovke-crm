@@ -61,7 +61,7 @@ export async function NutritionView() {
           <Stat
             label="Members logging food"
             value={number(members.logging)}
-            icon="solar:fork-knife-bold-duotone"
+            icon="solar:plate-bold-duotone"
             goodDirection="up"
             hint={`${number(members.entries)} meal(s) logged`}
           />

@@ -87,7 +87,7 @@ export async function FoodsView({ query }: { query: FoodsQuery }) {
           <Stat
             label="Meals logged"
             value={number(overview.members.entries)}
-            icon="solar:fork-knife-bold-duotone"
+            icon="solar:plate-bold-duotone"
             goodDirection="up"
             hint={`${number(overview.members.logging)} member(s) have logged something`}
           />

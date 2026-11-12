@@ -12,11 +12,20 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
+import { DialogIconButton } from '@/src/components/ui/dialog-button';
+import type { ReleaseRow } from '@/src/lib/types';
+
 import { saveRelease, setUpdatePolicy, type ReleaseState } from './actions';
 
-/** Tell the app about a build the store is serving. */
-export function NewReleaseForm() {
+/**
+ * Tell the app about a build the store is serving — or, given `release`,
+ * change one already recorded. The API is idempotent on platform, version
+ * and build, so an edit is the same post with those three fixed, and the
+ * release date carried along so it does not jump to today.
+ */
+export function NewReleaseForm({ release }: { release?: ReleaseRow } = {}) {
   const [state, action, pending] = useActionState<ReleaseState, FormData>(saveRelease, {});
+  const fixed = Boolean(release);
 
   return (
     <Stack component="form" action={action} spacing={2}>
@@ -31,15 +40,33 @@ export function NewReleaseForm() {
         </Alert>
       )}
 
+      {release && (
+        <>
+          <input type="hidden" name="platform" value={release.platform} />
+          <input type="hidden" name="version" value={release.version} />
+          <input type="hidden" name="build" value={release.build} />
+          <input type="hidden" name="editing" value="yes" />
+          {release.releasedAt && <input type="hidden" name="releasedAt" value={release.releasedAt} />}
+        </>
+      )}
+
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField select name="platform" label="Platform" defaultValue="android" fullWidth size="small" disabled={pending}>
+          <TextField
+            select
+            {...(fixed ? {} : { name: 'platform' })}
+            label="Platform"
+            defaultValue={release?.platform ?? 'android'}
+            fullWidth
+            size="small"
+            disabled={pending || fixed}
+          >
             <MenuItem value="android">Android</MenuItem>
             <MenuItem value="ios">iOS</MenuItem>
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 6 }}>
-          <TextField select name="status" label="Status" defaultValue="current" fullWidth size="small" disabled={pending}>
+          <TextField select name="status" label="Status" defaultValue={release?.status ?? 'current'} fullWidth size="small" disabled={pending}>
             <MenuItem value="current">current — the one the store is serving</MenuItem>
             <MenuItem value="supported">supported — still fine</MenuItem>
             <MenuItem value="deprecated">deprecated — makes the app knock</MenuItem>
@@ -47,19 +74,46 @@ export function NewReleaseForm() {
           </TextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField name="version" label="Version" placeholder="1.4.0" fullWidth size="small" required disabled={pending} />
+          <TextField
+            {...(fixed ? {} : { name: 'version' })}
+            label="Version"
+            placeholder="1.4.0"
+            defaultValue={release?.version ?? ''}
+            fullWidth
+            size="small"
+            required={!fixed}
+            disabled={pending || fixed}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField name="build" label="Build" placeholder="41" fullWidth size="small" required disabled={pending} />
+          <TextField
+            {...(fixed ? {} : { name: 'build' })}
+            label="Build"
+            placeholder="41"
+            defaultValue={release?.build ?? ''}
+            fullWidth
+            size="small"
+            required={!fixed}
+            disabled={pending || fixed}
+          />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField name="minOs" label="Minimum OS (optional)" placeholder="14" fullWidth size="small" disabled={pending} />
+          <TextField
+            name="minOs"
+            label="Minimum OS (optional)"
+            placeholder="14"
+            defaultValue={release?.minOs ?? ''}
+            fullWidth
+            size="small"
+            disabled={pending}
+          />
         </Grid>
         <Grid size={12}>
           <TextField
             name="notes"
             label="What is new, in the member's words"
             placeholder="Shown on the soft prompt"
+            defaultValue={release?.notes ?? ''}
             fullWidth
             size="small"
             multiline
@@ -71,10 +125,12 @@ export function NewReleaseForm() {
 
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
         <Button type="submit" variant="contained" loading={pending}>
-          Record the release
+          {fixed ? 'Save the release' : 'Record the release'}
         </Button>
         <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-          Idempotent on platform, version and build — posting the same release again updates it.
+          {fixed
+            ? 'Platform, version and build are what identify it, so they stay as recorded.'
+            : 'Idempotent on platform, version and build — posting the same release again updates it.'}
         </Typography>
       </Stack>
     </Stack>
@@ -209,5 +265,20 @@ export function UpdatePolicyForm({
         </Typography>
       </Stack>
     </Stack>
+  );
+}
+
+/** The pencil on a release row. */
+export function EditReleaseButton({ release }: { release: ReleaseRow }) {
+  return (
+    <DialogIconButton
+      icon="solar:pen-bold-duotone"
+      tooltip={`Edit ${release.version} (${release.build})`}
+      maxWidth="md"
+      title={`${release.platform === 'ios' ? 'iOS' : 'Android'} ${release.version} (${release.build})`}
+      subtitle="Status, notes and minimum OS. Marking it current steps the platform's other current build down to supported."
+    >
+      <NewReleaseForm release={release} />
+    </DialogIconButton>
   );
 }

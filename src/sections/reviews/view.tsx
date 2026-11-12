@@ -18,7 +18,7 @@ import { ago, decimal, number, percent } from '@/src/lib/format';
 import { paths } from '@/src/layout/paths';
 import type { Reviews } from '@/src/lib/types';
 
-import { ReviewDelete } from './review-forms';
+import { ReviewDelete, ReviewEdit } from './review-forms';
 
 export type ReviewsQuery = {
   q: string;
@@ -202,7 +202,7 @@ export async function ReviewsView({ query }: { query: ReviewsQuery }) {
             { label: 'What they wrote' },
             { label: 'Item' },
             { label: 'Member' },
-            { label: 'Take it down', width: 280 },
+            { label: 'Edit or take down', width: 320 },
           ]}
           rows={data.map(review => ({
             key: review.id,
@@ -254,7 +254,10 @@ export async function ReviewsView({ query }: { query: ReviewsQuery }) {
               >
                 {review.member.name || review.member.id}
               </RowLink>,
-              <ReviewDelete key="delete" id={review.id} />,
+              <Stack key="actions" direction="row" spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+                <ReviewEdit review={review} />
+                <ReviewDelete id={review.id} />
+              </Stack>,
             ],
           }))}
           empty={query.q || query.rating ? 'Nothing matches those filters.' : 'Nobody has written a review yet.'}

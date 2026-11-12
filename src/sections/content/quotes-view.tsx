@@ -80,7 +80,7 @@ export async function QuotesView({ query }: { query: QuotesQuery }) {
           <Stat
             label="Lines"
             value={number(tips.totals.lines)}
-            icon="solar:quote-up-square-bold-duotone"
+            icon="solar:quote-square-bold-duotone"
             goodDirection="none"
             hint={`${number(tips.totals.active)} in rotation`}
           />

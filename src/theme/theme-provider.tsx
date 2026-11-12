@@ -4,7 +4,6 @@ import { useEffect, useMemo } from 'react';
 
 import CssBaseline from '@mui/material/CssBaseline';
 import {
-  useColorScheme,
   ThemeProvider as MuiThemeProvider,
   type Theme,
   type ThemeOptions,
@@ -49,24 +48,18 @@ function toFontFamily(value: unknown): string | undefined {
 // ----------------------------------------------------------------------
 
 /**
- * Pushes the settings a Material UI theme cannot express on its own:
- * the active color scheme and the document direction.
+ * Pushes the one setting a Material UI theme cannot express on its own: the
+ * document direction.
+ *
+ * The color scheme is deliberately **not** synced from here. MUI's
+ * `useColorScheme` owns it — it persists the choice under `mui-mode` and
+ * `InitColorSchemeScript` applies it before paint. This component used to
+ * also force the mode to the settings record's `colorScheme`, which nothing
+ * ever updates (the settings drawer is not mounted), so every click on the
+ * header's moon set `dark` and was put straight back to `light` on the next
+ * render: the toggle did nothing at all.
  */
-function SettingsSync({
-  colorScheme,
-  direction,
-}: {
-  colorScheme?: ThemeColorScheme;
-  direction?: ThemeDirection;
-}) {
-  const { mode, setMode } = useColorScheme();
-
-  useEffect(() => {
-    if (colorScheme && colorScheme !== mode) {
-      setMode(colorScheme);
-    }
-  }, [colorScheme, mode, setMode]);
-
+function SettingsSync({ direction }: { direction?: ThemeDirection }) {
   useEffect(() => {
     document.documentElement.dir = direction ?? themeConfig.direction;
   }, [direction]);
@@ -103,10 +96,7 @@ export function ThemeProvider({ children, themeOverrides ,...other }: ThemeProvi
       {...other}
     >
       <CssBaseline />
-      <SettingsSync
-        colorScheme={settingsState.colorScheme}
-        direction={settingsState.direction}
-      />
+      <SettingsSync direction={settingsState.direction} />
       {children}
     </MuiThemeProvider>
   );

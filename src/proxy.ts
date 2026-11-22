@@ -114,8 +114,12 @@ function checkLimit(key: string, max: number) {
   }
 }
 
-function rateLimit(ip: string, pathname: string) {
-  const bucket = SENSITIVE_PREFIXES.some((p) => pathname.startsWith(p))
+function rateLimit(ip: string, pathname: string, method: string) {
+  // The sign-in form is a Server Action, which posts to the page itself —
+  // so a POST under /auth is a key guess and gets the tight bucket, not the
+  // 300-a-minute one pages get.
+  const signingIn = method === 'POST' && pathname.startsWith('/auth/')
+  const bucket = signingIn || SENSITIVE_PREFIXES.some((p) => pathname.startsWith(p))
     ? 'sensitive'
     : pathname.startsWith('/api')
       ? 'api'
@@ -127,19 +131,25 @@ function rateLimit(ip: string, pathname: string) {
 /*                        Operator gate (the admin key)                       */
 /* -------------------------------------------------------------------------- */
 
-// The panel has no accounts: it is open to whoever holds the API's admin key,
-// which `lib/session.ts` puts in an httpOnly cookie at sign-in. Checking it
-// here means a visitor with no key is redirected before a page is rendered or
-// a single API call is made — the pages check it too, but by then the shell
-// has already been streamed and the redirect has to happen in the browser.
+// The panel has no accounts: it is open to whoever signed in with the API's
+// admin key (and authenticator code), which `lib/session.ts` turns into a
+// session in an httpOnly cookie. Checking it here means a visitor with none
+// is redirected before a page is rendered or a single API call is made — the
+// pages check it too, but by then the shell has already been streamed and
+// the redirect has to happen in the browser.
 
-const ADMIN_COOKIE = 'vokve_admin_key'
+/** A member of staff's session (RULES Z9) — the normal way in. */
+const STAFF_SESSION_COOKIE = 'vokve_staff_session'
+/** The break-glass key's session. */
+const ADMIN_SESSION_COOKIE = 'vokve_admin_session'
+/** The key itself, from before sessions — still honoured until it expires. */
+const LEGACY_ADMIN_COOKIE = 'vokve_admin_key'
 const OPERATOR_PATHS = ['/dashboard']
 
 function needsAdminKey(request: NextRequest): boolean {
   const { pathname } = request.nextUrl
   if (!OPERATOR_PATHS.some((prefix) => pathname.startsWith(prefix))) return false
-  if (request.cookies.has(ADMIN_COOKIE)) return false
+  if ([STAFF_SESSION_COOKIE, ADMIN_SESSION_COOKIE, LEGACY_ADMIN_COOKIE].some((name) => request.cookies.has(name))) return false
   // Outside production a key in the environment stands in for the cookie, the
   // same fallback `lib/api.ts` makes, so a developer running both halves is
   // not asked to sign in on every restart.
@@ -317,7 +327,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // 8. Rate limiting
-  const rl = rateLimit(getClientIp(request), pathname)
+  const rl = rateLimit(getClientIp(request), pathname, method)
   if (!rl.success) {
     const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000))
     const res = reject(429, 'Too many requests', requestId, {

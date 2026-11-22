@@ -19,7 +19,7 @@ export default function Page({ searchParams }: { searchParams: Promise<SearchPar
         <Logo disableLink width={160} height={40} />
 
         <Stack spacing={0.5}>
-          <Typography variant="h5">The operator&apos;s own surface</Typography>
+          <Typography variant="h5">Sign in to VOKVE Admin</Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Pointed at{' '}
             <Typography component="span" variant="body2" sx={{ fontFamily: 'var(--font-geist-mono)' }}>
@@ -41,10 +41,17 @@ export default function Page({ searchParams }: { searchParams: Promise<SearchPar
 /** Why they are here, when they did not come here on purpose. */
 async function Notice({ search }: { search: Promise<SearchParams> }) {
   const params = await search;
+  if (params.from === 'blocked') {
+    return (
+      <Alert severity="warning" variant="outlined">
+        Your account, or your manager&apos;s, has been switched off. Ask an admin.
+      </Alert>
+    );
+  }
   if (params.from !== 'expired') return null;
   return (
     <Alert severity="info" variant="outlined">
-      That session has run out, or the key was changed on the API. Sign in again.
+      That session has ended — it ran out, you were signed out by whoever manages you, or your access changed. Sign in again.
     </Alert>
   );
 }

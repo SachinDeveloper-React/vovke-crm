@@ -92,7 +92,7 @@ export async function refundOrder(_previous: OrderActionState, form: FormData): 
       data.money === 'refunded'
         ? `${rupees(data.amount)} is on its way back through the gateway.`
         : data.money === 'failed'
-          ? 'The gateway refused the money refund — the order is refunded and the payment still reads as paid. That mismatch needs chasing.'
+          ? 'The gateway did not take the money refund yet — the order is refunded and the payment still reads as paid. It is retried automatically (5 min, then backing off), and an alert goes out if it keeps failing.'
           : '',
     ]
       .filter(Boolean)

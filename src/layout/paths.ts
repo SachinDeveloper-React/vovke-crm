@@ -17,6 +17,16 @@ export const paths = {
 
   dashboard: {
     root: ROOTS.DASHBOARD,
+    /** The people who run VOKVE — admins, managers, agents — and what each did (RULES Z9). */
+    staff: {
+      root: `${ROOTS.DASHBOARD}/staff`,
+      activity: `${ROOTS.DASHBOARD}/staff/activity`,
+      detail: (staffId: string) => `${ROOTS.DASHBOARD}/staff/${encodeURIComponent(staffId)}` as const,
+    },
+    /** One's own password, authenticator and sessions. */
+    account: `${ROOTS.DASHBOARD}/account`,
+    /** Where a page this person may not open sends them. */
+    forbidden: `${ROOTS.DASHBOARD}/forbidden`,
     /** What every page of this panel is for, end to end (`section-guides.ts`). */
     guide: `${ROOTS.DASHBOARD}/guide`,
     /** Growth, use, steps, coins, orders. */
@@ -92,6 +102,8 @@ export const paths = {
     leaderboard: `${ROOTS.DASHBOARD}/leaderboard`,
     /** Releases, and the line below which a build is refused (RULES DV12). */
     releases: `${ROOTS.DASHBOARD}/releases`,
+    /** The launcher icon phones show: everyday, festive, scheduled (RULES DV13). */
+    appIcon: `${ROOTS.DASHBOARD}/app-icon`,
     /** What the app has told everybody, and what became of it. */
     notifications: `${ROOTS.DASHBOARD}/notifications`,
     /** The support queue, and one conversation in full. */

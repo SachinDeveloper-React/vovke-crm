@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { Label } from '@/src/components/label';
 import { BoolChip, Kv, Mono, Panel, PermissionChip } from '@/src/components/ui';
 import { adminGet, memberOverview, memberZone } from '@/src/lib/api';
+import { bootStateTone, failureText, providerLabel, verdictTone } from '@/src/lib/attestation';
 import { ago, dateTime, deviceLabel, humanise, number } from '@/src/lib/format';
 import type { DevicePermissionRow, Page } from '@/src/lib/types';
 
@@ -118,11 +119,59 @@ export async function MemberInstalls({ userId }: { userId: string }) {
                 </Typography>
                 <Kv
                   items={[
-                    { label: 'Integrity', value: install.integrity.verdict ?? '—', hint: install.integrity.provider ? `${install.integrity.provider}${install.integrity.checkedAt ? ` · ${ago(install.integrity.checkedAt)}` : ''}` : undefined },
-                    { label: 'Key attested', value: <BoolChip value={install.integrity.attested} yes="attested" no="not attested" /> },
-                    { label: 'Security level', value: install.integrity.securityLevel ?? '—' },
+                    {
+                      label: 'Key attested',
+                      value: <BoolChip value={install.integrity.attested} yes="attested" no="not attested" />,
+                      hint: install.integrity.key ? `by ${providerLabel(install.integrity.key.provider)}` : 'no key on file',
+                    },
+                    { label: 'Security level', value: humanise(install.integrity.securityLevel ?? '—') },
+                    ...(install.integrity.key
+                      ? [
+                          { label: 'Key', value: <Mono>{install.integrity.key.keyId.slice(0, 12)}…</Mono>, hint: install.integrity.key.verifiedAt ? `accepted ${ago(install.integrity.key.verifiedAt)}` : undefined },
+                          install.integrity.key.provider === 'app_attest'
+                            ? {
+                                label: 'App Attest',
+                                value: install.integrity.key.appAttestEnvironment ? (
+                                  <Label color={install.integrity.key.appAttestEnvironment === 'production' ? 'success' : 'info'} variant="soft">
+                                    {install.integrity.key.appAttestEnvironment}
+                                  </Label>
+                                ) : (
+                                  '—'
+                                ),
+                              }
+                            : {
+                                label: 'Boot state',
+                                value: (
+                                  <Label color={bootStateTone(install.integrity.key.verifiedBootState, install.integrity.key.deviceLocked)} variant="soft">
+                                    {install.integrity.key.verifiedBootState ?? 'unknown'}
+                                    {install.integrity.key.deviceLocked === false ? ' · unlocked' : ''}
+                                  </Label>
+                                ),
+                              },
+                        ]
+                      : []),
+                    ...(install.platform === 'ios'
+                      ? []
+                      : [
+                          {
+                            label: 'Play Integrity',
+                            value: install.integrity.play ? (
+                              <Label color={verdictTone(install.integrity.play.verdict)} variant="soft">
+                                {install.integrity.play.verdict}
+                              </Label>
+                            ) : (
+                              '—'
+                            ),
+                            hint: install.integrity.play?.checkedAt ? ago(install.integrity.play.checkedAt) : undefined,
+                          },
+                        ]),
                   ]}
                 />
+                {install.integrity.key?.failure && (
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'warning.main' }}>
+                    Not attested: {failureText(install.integrity.key.failure)}
+                  </Typography>
+                )}
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" sx={{ mb: 1 }}>
                     Signals the phone admitted

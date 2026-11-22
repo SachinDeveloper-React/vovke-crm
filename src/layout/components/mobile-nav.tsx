@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import MenuIcon from '@mui/icons-material/Menu';
 import Box from '@mui/material/Box';
@@ -12,7 +12,8 @@ import { Logo } from '@/src/components/logo';
 import { NavSectionVertical } from '@/src/components/nav-section/vertical';
 import { Scrollbar } from '@/src/components/scrollbar';
 
-import { navData } from '../config-nav-dashboard';
+import { navData, visibleNav } from '../config-nav-dashboard';
+import { useStaff } from '@/src/components/staff/staff-context';
 
 /**
  * The sidebar on a phone, and the button that opens it.
@@ -44,6 +45,8 @@ import { navData } from '../config-nav-dashboard';
 export function MobileNav({ layoutQuery }: { layoutQuery: 'sm' | 'md' | 'lg' | 'xl' }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
+  const { can, loading } = useStaff();
+  const nav = useMemo(() => (loading ? [] : visibleNav(navData, can)), [can, loading]);
 
   const show = useCallback(() => setOpen(true), []);
   const hide = useCallback(() => setOpen(false), []);
@@ -86,7 +89,7 @@ export function MobileNav({ layoutQuery }: { layoutQuery: 'sm' | 'md' | 'lg' | '
 
         <Scrollbar fillContent>
           <Box onClick={hide}>
-            <NavSectionVertical data={navData} sx={{ px: 2, flex: '1 1 auto' }} />
+            <NavSectionVertical data={nav} sx={{ px: 2, flex: '1 1 auto' }} />
           </Box>
         </Scrollbar>
       </Drawer>

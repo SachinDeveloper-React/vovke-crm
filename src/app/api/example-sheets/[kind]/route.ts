@@ -1,4 +1,4 @@
-import { readAdminKey } from '@/src/lib/api';
+import { readAdminCredential } from '@/src/lib/api';
 import { EXAMPLE_SHEETS, type ExampleSheetKind } from '@/src/lib/example-sheets';
 
 /**
@@ -9,7 +9,7 @@ import { EXAMPLE_SHEETS, type ExampleSheetKind } from '@/src/lib/example-sheets'
  * out is the one whose rows were skipped. This comes from the same column
  * list the importer reads, so the two cannot disagree.
  *
- * Behind the admin cookie like every other page here. There is nothing
+ * Behind the admin session like every other page here. There is nothing
  * private in a template — but an open download from the operator panel is
  * the kind of thing nobody means to leave open.
  */
@@ -24,7 +24,7 @@ export async function GET(_request: Request, context: { params: Promise<{ kind: 
       status: 404,
     });
   }
-  if (!(await readAdminKey())) return new Response('Not signed in.', { status: 401 });
+  if (!(await readAdminCredential())) return new Response('Not signed in.', { status: 401 });
 
   const body = await sheet.build();
   return new Response(body, {

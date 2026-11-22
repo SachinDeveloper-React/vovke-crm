@@ -18,7 +18,8 @@
  *     worker. Capped at MAX_IMAGE_ENTRIES, oldest dropped first.
  *   - `/iconify/<version>/*` — the page icons, at a URL that carries a hash
  *     of the whole set: cache-first, like a build file.
- *   - `/icons/*`, `/favicon.ico` — the app's own icons: cache-first.
+ *   - `/icons/*`, `/logo/*`, `/favicon.ico` — the app's own icons and
+ *     wordmark: cache-first.
  *   - Pages (navigations) — **never cached.** Every page here is a member's
  *     account, an order book, a fraud case: data that is private to whoever
  *     is signed in and wrong the moment it is a minute old. A navigation goes
@@ -83,7 +84,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(cacheFirst(request, STATIC_CACHE, true));
     return;
   }
-  if (url.pathname.startsWith('/icons/') || url.pathname === '/favicon.ico') {
+  if (url.pathname.startsWith('/icons/') || url.pathname.startsWith('/logo/') || url.pathname === '/favicon.ico') {
     event.respondWith(cacheFirst(request, SHELL_CACHE, false));
   }
 });

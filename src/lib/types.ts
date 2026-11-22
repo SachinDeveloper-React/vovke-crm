@@ -130,6 +130,25 @@ export interface Install {
     checkedAt: string | null;
     attested: boolean | null;
     securityLevel: string | null;
+    /**
+     * The signing key and what vouched for it: Google's key attestation on
+     * Android, Apple's App Attest on an iPhone. Null before the phone has
+     * attested anything.
+     */
+    key?: {
+      keyId: string;
+      provider: 'key_attestation' | 'app_attest';
+      /** Why the key was kept unattested; null when it was attested. */
+      failure: string | null;
+      /** Android only. */
+      verifiedBootState: string | null;
+      deviceLocked: boolean | null;
+      /** iOS only: `production` or `development`. */
+      appAttestEnvironment: string | null;
+      verifiedAt: string | null;
+    } | null;
+    /** The latest Play Integrity verdict — Android only. */
+    play?: { verdict: string; reasons: string[]; checkedAt: string | null } | null;
   };
   signals: {
     rooted: boolean | null;
@@ -624,6 +643,43 @@ export interface ReleasesResponse extends Paged<ReleaseRow> {
 export interface UpdatePolicyResult {
   minVersion: Record<Platform, string>;
   update: UpdatePolicy;
+}
+
+// ─── GET/PUT /admin/app-icon, POST/DELETE /admin/app-icon/schedule ─────────
+
+export type AppIconKind = 'base' | 'festive';
+
+export interface AppIconEntry {
+  key: string;
+  kind: AppIconKind;
+  label: string;
+  retired: boolean;
+}
+
+export interface AppIconWindow {
+  id: string;
+  icon: string;
+  startsAt: string;
+  endsAt: string;
+  note: string | null;
+  state: 'closed' | 'live' | 'upcoming';
+}
+
+export interface AppIconSettings {
+  catalog: AppIconEntry[];
+  defaultIcon: string;
+  /** The everyday icon. */
+  base: string;
+  /** A festive icon switched on by hand; wins over the schedule. */
+  festive: string | null;
+  schedule: AppIconWindow[];
+  /** What a phone with festive icons on is told right now. */
+  live: { icon: string; festive: string | null; source: 'manual' | 'schedule' | 'base'; until: string | null };
+  /** The icon each install last reported, over devices seen in `activeDays`. */
+  devices: { icon: string | null; platform: Platform; devices: number }[];
+  activeDays: number;
+  updatedBy: string | null;
+  updatedAt: string | null;
 }
 
 // ─── GET /admin/analytics/overview ─────────────────────────────────────────
@@ -2337,8 +2393,9 @@ export type TimelineDevice = {
   name: string;
   deviceSteps: number;
   /**
-   * Of `deviceSteps`, what the phone's own motion gate held back as a
-   * vehicle's vibration rather than steps. Already out of everything the day
+   * Of `deviceSteps`, what the phone's own motion gate held back as counted
+   * in a vehicle (tracker 2.9: while Activity Recognition said so; it can
+   * fall when a held walk is given back). Already out of everything the day
    * was scored on, so it is why this row's raw count can read higher than
    * the steps it was counted for. 0 before tracker 2.8.
    */
@@ -2788,4 +2845,26 @@ export interface SignedUpload {
   contentType: string;
   /** Where it will be readable once it lands — not before. */
   url: string;
+}
+
+/** `GET /admin/steps/phones`: the fleet by platform, and what vouches for each key (D-104). */
+export interface PhonesView {
+  platforms: {
+    platform: 'android' | 'ios';
+    installs: number;
+    signedIn: number;
+    keyOnFile: number;
+    attested: number;
+    syncing: number;
+    failures: { failure: string; installs: number }[];
+  }[];
+  proofs: { provider: string; verdict: string; count: number }[];
+  ios: {
+    bundleId: string;
+    teamId: string | null;
+    teamIdFrom: 'env' | 'config' | null;
+    environments: string[];
+    acceptsDevelopment: boolean;
+  };
+  windowDays: number;
 }

@@ -55,6 +55,7 @@ export const GUIDE_GROUPS = [
   'Shop',
   'Fitness & food',
   'System',
+  'Team',
   'Decide',
 ] as const;
 
@@ -927,6 +928,96 @@ export const sectionGuides: SectionGuide[] = [
       'Raising the minimum stops every older build working. A member who cannot update is a member who cannot use the app.',
       'The endpoint a blocked build calls to find out what to tell its member is deliberately exempt from the gate — so a wall still has a message behind it.',
     ],
+  },
+  {
+    pattern: '/dashboard/app-icon',
+    group: 'Decide',
+    title: 'App icon',
+    question: 'Which icon is on members\' home screens, and when does it change?',
+    what:
+      'The everyday launcher icon, the festive ones, and the windows that switch a festive icon on and off by themselves. Every icon is inside the app, so this only chooses among the ones a build carries.',
+    how: [
+      'Pick the everyday icon. It shows whenever nothing festive is on, and to members who turned festive icons off.',
+      'For a festival, add a window to the schedule — open it a day early, because a phone only learns of it when it is opened.',
+      'Switch a festive icon on by hand only for something unplanned; it stays until switched off and wins over the schedule.',
+    ],
+    writes: ['Set the everyday icon', 'Switch a festive icon on or off', 'Schedule a festive window', 'Remove a window'],
+    careful: [
+      'iOS shows the member an alert of its own each time the icon changes, so do not flip it back and forth.',
+      'Android changes the icon when the member leaves the app, and some launchers take a moment to redraw it.',
+      'A new icon needs new art and a new build before it can be chosen here.',
+    ],
+  },
+  // ── Team (RULES Z9) ──────────────────────────────────────────────────────
+  {
+    pattern: '/dashboard/staff',
+    group: 'Team',
+    title: 'Staff',
+    question: 'Who can sign in to this panel, and what may each of them do?',
+    what:
+      'Every admin, manager and agent, with their role, their manager, their status and how many permissions they hold right now. An admin sees everybody; a manager sees themselves and their own agents.',
+    how: [
+      'Admins create managers and give each one the permissions their work needs — start from a preset and adjust.',
+      'Managers create their own agents, and can give them only what they hold themselves.',
+      'The new person gets a temporary password, shown once: hand it over privately. Their first sign-in makes them choose their own password and set up an authenticator app.',
+    ],
+    writes: ['Create an admin, manager or agent'],
+    careful: [
+      'An agent never holds more than their manager does right now. Take a permission off a manager and their agents lose it in the same moment.',
+      'Switching a manager off blocks every agent under them until they are moved or the manager is back.',
+      'Hiding a menu item is only a courtesy: the API checks the permission on every request.',
+    ],
+  },
+  {
+    pattern: '/dashboard/staff/:staffId',
+    group: 'Team',
+    title: 'Staff member',
+    question: "What can this person do, and how do I change it or take it away?",
+    what:
+      'One account: role, manager, status, the permissions in force (and any dormant ones their manager no longer holds), their team if they manage one, where they are signed in, and their recent activity.',
+    how: [
+      'Tick or untick permissions and save. Only what their manager holds can be ticked for an agent.',
+      'Suspend to stop them at once — every browser they are signed in on is signed out.',
+      'Reset their password or authenticator when they lose it; they set a new one at next sign-in.',
+      'Admins can move an agent to another manager, or promote and demote.',
+    ],
+    writes: ['Edit name and permissions', 'Suspend or reactivate', 'Reset password', 'Reset authenticator', 'Sign out everywhere', 'Move to another manager', 'Change role', 'Delete'],
+    careful: [
+      'Nobody can suspend, delete or demote themselves, and the last active admin cannot be removed.',
+      'A manager with agents cannot be demoted or deleted until the agents are moved.',
+      'Moving an agent drops whatever the new manager does not hold.',
+    ],
+  },
+  {
+    pattern: '/dashboard/staff/activity',
+    group: 'Team',
+    title: 'Activity log',
+    question: 'Who did what, and when?',
+    what:
+      'Every request on the admin surface — page views, changes, refusals — and every sign-in, written by the API before it answers. Admins see everybody; managers see themselves and their agents.',
+    how: [
+      'Filter by person, role, kind (changes, views, sign-ins) or refusals only.',
+      'A red row was refused or failed; its code says why (PERMISSION_DENIED names the permission that was missing).',
+    ],
+    writes: [],
+    careful: [
+      'Passwords, codes and keys are never recorded — they show as [redacted].',
+      'Views are kept six months; changes and sign-ins two years.',
+    ],
+  },
+  {
+    pattern: '/dashboard/account',
+    group: 'Team',
+    title: 'My account',
+    question: 'How do I change my password or sign out a browser I left signed in?',
+    what: 'Your own account: role, manager, the permissions you hold, where you are signed in, and what you have done.',
+    how: [
+      'Change your password: every other browser is signed out.',
+      'Sign out a session you do not recognise, then change your password.',
+      'New phone for your authenticator? Ask whoever manages you to reset it.',
+    ],
+    writes: ['Change password', 'Sign out another browser'],
+    careful: ['Your permissions are set by whoever manages you; ask them, not support, if you need more.'],
   },
 ];
 

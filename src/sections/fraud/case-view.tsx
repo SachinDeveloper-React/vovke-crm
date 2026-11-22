@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 
 import { RankedBars } from '@/src/components/charts';
 import { Label } from '@/src/components/label';
+import { failureText, providerLabel, verdictTone } from '@/src/lib/attestation';
 import { DataTable, Evidence, FlagStatusChip, Kv, Mono, Panel, SelectFilter, Stat } from '@/src/components/ui';
 import { adminGet } from '@/src/lib/api';
 import { ago, coins, dateTime, date as formatDate, humanise, number, percent } from '@/src/lib/format';
@@ -225,26 +226,34 @@ export async function FraudCaseView({ userId, days }: { userId: string; days: nu
           <Panel
             title="What the phones proved"
             subtitle="The attestation record, newest first"
-            note="A Keystore key that cannot be attested, or a day that carried no Play verdict, is itself a refusal."
+            note="Android proves a Keystore key with Google’s key attestation and sends Play verdicts; an iPhone proves a Secure Enclave key with Apple’s App Attest. An unattested key costs trust; a refused one was never stored."
             dense
           >
             <DataTable
               columns={[{ label: 'Install' }, { label: 'Provider' }, { label: 'Verdict' }, { label: 'Checked', align: 'right' }]}
-              rows={attestations.map((record, index) => ({
-                key: `${record.deviceId}-${record.checkedAt}-${index}`,
-                cells: [
-                  <Mono key="device">{record.deviceId}</Mono>,
-                  record.provider,
-                  <Label
-                    key="verdict"
-                    color={record.verdict === 'pass' || record.verdict === 'verified' ? 'success' : 'error'}
-                    variant="soft"
-                  >
-                    {record.verdict}
-                  </Label>,
-                  ago(record.checkedAt),
-                ],
-              }))}
+              rows={attestations.map((record, index) => {
+                const failure = typeof record.details?.failure === 'string' ? record.details.failure : null;
+                return {
+                  key: `${record.deviceId}-${record.checkedAt}-${index}`,
+                  cells: [
+                    <Mono key="device">{record.deviceId}</Mono>,
+                    providerLabel(record.provider),
+                    <Stack key="verdict" spacing={0.25}>
+                      <Box>
+                        <Label color={verdictTone(record.verdict)} variant="soft">
+                          {record.verdict}
+                        </Label>
+                      </Box>
+                      {failure && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', maxWidth: 260 }}>
+                          {failureText(failure)}
+                        </Typography>
+                      )}
+                    </Stack>,
+                    ago(record.checkedAt),
+                  ],
+                };
+              })}
               empty="No attestation has been recorded."
             />
           </Panel>

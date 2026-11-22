@@ -1,3 +1,4 @@
+import { StaffProvider } from "@/src/components/staff/staff-context";
 import { GuideIndexProvider } from "@/src/components/ui/section-guide";
 import { DashboardLayout } from "@/src/layout/dashboard/layout";
 import { guideIndex } from "@/src/layout/section-guides";
@@ -9,7 +10,10 @@ import { guideIndex } from "@/src/layout/section-guides";
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <GuideIndexProvider entries={guideIndex()}>
-      <DashboardLayout>{children}</DashboardLayout>
+      {/* Who is signed in, so the menu shows only what they may open (RULES Z9). */}
+      <StaffProvider>
+        <DashboardLayout>{children}</DashboardLayout>
+      </StaffProvider>
     </GuideIndexProvider>
   );
 }

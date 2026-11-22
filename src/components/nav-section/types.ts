@@ -21,6 +21,8 @@ export type NavItemData = {
   caption?: string;
   disabled?: boolean;
   roles?: string[];
+  /** The permission (or any of several) that opens the page; none = everybody signed in (RULES Z9). */
+  permission?: string | readonly string[];
   meta?: string;
   children?: NavItemData[];
 };

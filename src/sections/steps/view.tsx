@@ -11,6 +11,7 @@ import { paths } from '@/src/layout/paths';
 import type { StepsConfigView } from '@/src/lib/types';
 
 import { ConfigSection } from './config-form';
+import { PhonesPanel } from './phones-panel';
 import { at, STEPS_CONFIG_GROUPS } from './fields';
 
 /**
@@ -71,6 +72,8 @@ export async function StepsConfigPage() {
           />
         </Grid>
       </Grid>
+
+      <PhonesPanel />
 
       {overrides.length > 0 && (
         <Panel

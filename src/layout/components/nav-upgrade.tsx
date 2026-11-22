@@ -1,3 +1,5 @@
+'use client';
+
 import type { ComponentProps } from 'react';
 
 import Box from '@mui/material/Box';
@@ -6,6 +8,7 @@ import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
 import { Label } from '@/src/components/label';
+import { useStaff } from '@/src/components/staff/staff-context';
 import { CONFIG } from '@/src/config-global';
 
 type NavUpgradeProps = Omit<ComponentProps<typeof Stack>, 'sx'> & {
@@ -13,15 +16,21 @@ type NavUpgradeProps = Omit<ComponentProps<typeof Stack>, 'sx'> & {
 };
 
 /**
- * What this session is, at the foot of the sidebar.
- *
- * There is no operator account to show a face for — the panel is open because
- * whoever is reading it holds the API's admin key. What is worth saying
- * instead is how much of this surface can change anything: almost none of
- * it. Everything about a member is read-only; the writes are the verdict on a
- * flag, a re-score of a day, and the release decisions.
+ * Who this session is, at the foot of the sidebar (RULES Z9): the person,
+ * their role, who they answer to, and how much of the panel is theirs —
+ * the first thing to check when a page says "you do not have permission".
  */
 export function NavUpgrade({ sx, ...other }: NavUpgradeProps) {
+  const { me } = useStaff();
+  const root = me?.kind === 'root';
+  const title = !me ? 'Signed in' : root ? 'Owner key' : me.name;
+  const detail = !me
+    ? ''
+    : root
+      ? 'Break-glass access: everything is open, and every use is on the activity log. Sign in with your own account day to day.'
+      : me.role === 'admin'
+        ? 'Admin — every page and action, and the whole team.'
+        : `${me.effectivePermissions.length} permissions${me.manager ? ` · reports to ${me.manager.name}` : ''}. Every action is on the activity log.`;
   return (
     <Stack
       sx={[{ px: 2, pb: 3, pt: 1 }, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
@@ -36,16 +45,18 @@ export function NavUpgrade({ sx, ...other }: NavUpgradeProps) {
         }}
       >
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
-          <Iconify icon="solar:key-minimalistic-square-bold-duotone" width={18} />
-          <Typography variant="subtitle2" sx={{ color: 'var(--layout-nav-text-primary-color)' }}>
-            Operator session
+          <Iconify icon={root ? 'solar:key-minimalistic-square-bold-duotone' : 'solar:user-id-bold-duotone'} width={18} />
+          <Typography variant="subtitle2" noWrap sx={{ color: 'var(--layout-nav-text-primary-color)', minWidth: 0 }}>
+            {title}
           </Typography>
-          <Label color="success" variant="soft">
-            key
-          </Label>
+          {me && (
+            <Label color={root ? 'warning' : me.role === 'admin' ? 'error' : me.role === 'manager' ? 'warning' : 'info'} variant="soft">
+              {root ? 'key' : me.role}
+            </Label>
+          )}
         </Stack>
         <Typography variant="caption" sx={{ color: 'var(--layout-nav-text-disabled-color)', display: 'block' }}>
-          Read-only, except fraud verdicts, day re-scores and release decisions. Every write is kept in the audit log.
+          {detail}
         </Typography>
         <Typography variant="caption" sx={{ color: 'var(--layout-nav-text-disabled-color)', display: 'block', mt: 1 }}>
           {CONFIG.appName} v{CONFIG.appVersion}

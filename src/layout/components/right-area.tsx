@@ -11,6 +11,8 @@ import Typography from '@mui/material/Typography';
 
 import { Iconify } from '@/src/components/iconify/iconify';
 import { canInstall, canInstallOnServer, promptInstall, subscribeInstall } from '@/src/components/pwa/install-store';
+import { useStaff } from '@/src/components/staff/staff-context';
+import { TextLink } from '@/src/components/ui/nav';
 import { signOut } from '@/src/lib/session';
 
 /**
@@ -26,6 +28,7 @@ export function RightArea({ apiBase, timezone }: { apiBase: string; timezone: st
   // `system` is a mode too: what is on screen is then the OS's choice.
   const shown = mode === 'system' ? systemMode : mode;
   const installable = useSyncExternalStore(subscribeInstall, canInstall, canInstallOnServer);
+  const { me } = useStaff();
   const host = (() => {
     try {
       return new URL(apiBase).host;
@@ -75,6 +78,32 @@ export function RightArea({ apiBase, timezone }: { apiBase: string; timezone: st
           <Iconify icon={shown === 'dark' ? 'solar:sun-bold-duotone' : 'solar:moon-bold-duotone'} />
         </IconButton>
       </Tooltip>
+
+      {me && (
+        // Who is signed in, and as what: the first thing to know when a page
+        // says "you do not have permission" (RULES Z9).
+        <Tooltip title={me.kind === 'root' ? 'Signed in with the admin key — every use is logged' : `${me.email}${me.manager ? ` · manager: ${me.manager.name}` : ''}`}>
+          <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
+            <TextLink href="/dashboard/account" variant="subtitle2">
+              {me.name}
+            </TextLink>
+            <Typography
+              variant="caption"
+              sx={{
+                px: 0.75,
+                py: 0.25,
+                borderRadius: 0.75,
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                bgcolor: me.kind === 'root' ? 'warning.lighter' : 'primary.lighter',
+                color: me.kind === 'root' ? 'warning.darker' : 'primary.darker',
+              }}
+            >
+              {me.role === 'root' ? 'owner key' : me.role}
+            </Typography>
+          </Box>
+        </Tooltip>
+      )}
 
       <Box component="form" action={signOut}>
         <Button type="submit" size="small" color="inherit" startIcon={<Iconify icon="solar:logout-3-bold-duotone" />}>

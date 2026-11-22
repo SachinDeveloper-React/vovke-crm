@@ -36,7 +36,7 @@ export function Logo({
 }: LogoProps) {
     const rootSx: SxProps<Theme> = {
         width: width ?? (isSingle ? 40 : 148),
-        height: height ?? (isSingle ? 40 : 36),
+        height: height ?? (isSingle ? 40 : 30),
         flexShrink: 0,
         display: 'inline-flex',
         verticalAlign: 'middle',
@@ -45,14 +45,24 @@ export function Logo({
     };
 
     /**
-     * Drawn rather than loaded: the panel shipped with another product's PNG
-     * in `public/assets/logo`, and a wordmark in SVG is one less asset to
-     * get wrong — it inherits the theme's own primary color in both schemes.
+     * The wordmark comes in two cuts: black-and-red for the light scheme,
+     * white-and-red for the dark one. Both are in the page and CSS picks one
+     * off the `.dark` class `InitColorSchemeScript` puts on `<html>` before
+     * paint — choosing in JS would flash the wrong one until hydration.
      */
-    const logo = (
+    const wordmarkSx = {
+        display: 'block',
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        objectPosition: 'left center',
+    } as const;
+
+    const logo = isSingle ? (
+        /** The mini sidebar has 40px: too narrow for the wordmark, so the V alone. */
         <Box
             component="svg"
-            viewBox={isSingle ? '0 0 40 40' : '0 0 148 36'}
+            viewBox="0 0 40 40"
             role="img"
             aria-label={CONFIG.appName}
             sx={{ display: 'block', width: '100%', height: '100%' }}
@@ -67,27 +77,28 @@ export function Logo({
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            {!isSingle && (
-                <>
-                    <text
-                        x="46"
-                        y="20"
-                        fill="var(--mui-palette-text-primary)"
-                        style={{ font: '600 17px var(--font-geist-sans), system-ui, sans-serif', letterSpacing: '-0.3px' }}
-                    >
-                        Vokve
-                    </text>
-                    <text
-                        x="46"
-                        y="31"
-                        fill="var(--mui-palette-text-disabled)"
-                        style={{ font: '500 10px var(--font-geist-sans), system-ui, sans-serif', letterSpacing: '1.4px' }}
-                    >
-                        ADMIN
-                    </text>
-                </>
-            )}
         </Box>
+    ) : (
+        <>
+            <Box
+                component="img"
+                src="/logo/vokve-logo-light.png"
+                alt={CONFIG.appName}
+                width={640}
+                height={131}
+                draggable={false}
+                sx={{ ...wordmarkSx, '.dark &': { display: 'none' } }}
+            />
+            <Box
+                component="img"
+                src="/logo/vokve-logo-dark.png"
+                alt={CONFIG.appName}
+                width={640}
+                height={131}
+                draggable={false}
+                sx={{ ...wordmarkSx, display: 'none', '.dark &': { display: 'block' } }}
+            />
+        </>
     );
 
     const rootClassName = [logoClasses.root, className]

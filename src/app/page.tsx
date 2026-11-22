@@ -11,5 +11,5 @@ import { paths } from '@/src/layout/paths';
  * answer it can give.
  */
 export default function Page() {
-  redirect(paths.dashboard.analytics);
+  redirect(paths.dashboard.root);
 }

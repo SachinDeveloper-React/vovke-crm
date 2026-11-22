@@ -8,13 +8,17 @@ import { useCallback, useMemo } from "react"
 import { Scrollbar } from "@/src/components/scrollbar"
 import { NavUpgrade } from "../components/nav-upgrade"
 import { NavSectionVertical } from "@/src/components/nav-section/vertical"
-import { navData } from "../config-nav-dashboard"
+import { navData, visibleNav } from "../config-nav-dashboard"
+import { useStaff } from "@/src/components/staff/staff-context"
 import { Logo } from "@/src/components/logo"
 import { NavSectionMini } from "@/src/components/nav-section/mini"
 
 const DasboardNavVertical = ({ layoutQuery, sx }: { layoutQuery: 'sm' | 'md' | 'lg' | 'xl', sx?: SxProps<Theme> }) => {
     const theme = useTheme();
     const settings = useSettingsContext();
+    // Only what this person may open (RULES Z9); nothing until we know who they are.
+    const { can, loading } = useStaff();
+    const nav = useMemo(() => (loading ? [] : visibleNav(navData, can)), [can, loading]);
     const isNavMini = settings.navLayout === 'mini';
     const onToggleNav = useCallback(() => {
         settings.onUpdateField(
@@ -33,13 +37,13 @@ const DasboardNavVertical = ({ layoutQuery, sx }: { layoutQuery: 'sm' | 'md' | '
                 </Box>
 
                 <Scrollbar fillContent>
-                    <NavSectionVertical data={navData} sx={{ px: 2, flex: '1 1 auto' }} />
+                    <NavSectionVertical data={nav} sx={{ px: 2, flex: '1 1 auto' }} />
 
                     <NavUpgrade />
                 </Scrollbar>
             </>
         );
-    }, [])
+    }, [nav])
     const renderNavMini = useMemo(() => {
         return (
             <>
@@ -48,13 +52,13 @@ const DasboardNavVertical = ({ layoutQuery, sx }: { layoutQuery: 'sm' | 'md' | '
                 </Box>
 
                 <Scrollbar fillContent>
-                    <NavSectionMini data={navData}
+                    <NavSectionMini data={nav}
                      sx={{ pb: 2, px: 0.5, ...hideScrollY, flex: '1 1 auto', overflowY: 'auto' }}
                     />
                 </Scrollbar>
             </>
         );
-    }, [])
+    }, [nav])
 
 
 

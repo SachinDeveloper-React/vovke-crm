@@ -594,6 +594,27 @@ export const sectionGuides: SectionGuide[] = [
     ],
   },
   {
+    pattern: '/dashboard/automations',
+    group: 'Shop',
+    title: 'Automations',
+    question: 'What does the app tell members on its own, and how do I change it?',
+    what:
+      'Two kinds of message that send themselves. Automations are built in, each with a reason the server checks — morning motivation, the afternoon check-in for members behind on their goal, the goal reached, the Monday summary, the win-back after days of silence, the update notice for an old build, the tip of the day, and a saved reward the wallet now covers. Scheduled messages are yours, written whole and sent on a date or a weekly pattern to a segment.',
+    how: [
+      'Open an automation with Change it: switch it on or off, set the hour (the member’s own clock) and the days, and write its lines. One line is picked per member per day, in turn.',
+      'Use only the {names} shown under each message. Text in [square brackets] is dropped when a value inside it is empty or zero — “Good morning[, {firstName}]”.',
+      'Before switching one on, put a member id into Try it on a member and read what they would get from their own figures. Send it to them now sends that one message as a test.',
+      'For a festival, a new feature or a weekly reminder, write a scheduled message: what kind it is decides which switch can silence it.',
+      'Read the figures on each card a week later: sent, pushed and opened.',
+    ],
+    writes: ['Change an automation', 'Put an automation back on its defaults', 'Send a test to one member', 'Schedule, change, turn off or delete a scheduled message', 'Change the daily cap or stop everything'],
+    careful: [
+      'An automation that is on messages everybody it applies to, every day it runs, until it is switched off. The daily cap (most a member gets a day) is the guard — keep it low.',
+      'A member who switched Tips & Motivation off in the app gets no motivation or information messages at all, not even a feed row; offers obey Offers & Promotions and updates obey Announcements.',
+      'Deleting a scheduled message stops it; what it already sent stays in members’ feeds and on Notifications.',
+    ],
+  },
+  {
     pattern: '/dashboard/messages',
     group: 'Shop',
     title: 'Messages',

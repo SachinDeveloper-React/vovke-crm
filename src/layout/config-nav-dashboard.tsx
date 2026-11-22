@@ -123,6 +123,13 @@ export const navData: NavGroupData[] = [
         icon: <Iconify icon="solar:plain-bold-duotone" />,
         caption: 'Tell a segment something',
       },
+      {
+        title: 'Automations',
+        path: paths.dashboard.automations,
+        permission: ['notifications.view', 'notifications.automate'],
+        icon: <Iconify icon="solar:bolt-bold-duotone" />,
+        caption: 'Motivation, updates and tips that send themselves',
+      },
     ],
   },
   {

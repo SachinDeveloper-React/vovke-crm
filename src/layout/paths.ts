@@ -98,6 +98,8 @@ export const paths = {
     dietPlan: (planId: string) => `${ROOTS.DASHBOARD}/diet-plans/${encodeURIComponent(planId)}` as const,
     /** Telling a segment something. */
     messages: `${ROOTS.DASHBOARD}/messages`,
+    /** What the server says on its own, and what the operator scheduled (RULES M11). */
+    automations: `${ROOTS.DASHBOARD}/automations`,
     /** The weekly board: the prize ladder and the words about it (RULES §L). */
     leaderboard: `${ROOTS.DASHBOARD}/leaderboard`,
     /** Releases, and the line below which a build is refused (RULES DV12). */

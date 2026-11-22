@@ -2868,3 +2868,98 @@ export interface PhonesView {
   };
   windowDays: number;
 }
+
+// ─── Automated and scheduled messages (RULES M11) ────────────────────────────
+
+export type AutomationKey =
+  | 'morning_motivation'
+  | 'afternoon_check'
+  | 'goal_reached'
+  | 'weekly_summary'
+  | 'win_back'
+  | 'app_update'
+  | 'health_tip'
+  | 'wishlist_goal';
+
+export interface AutomationTemplate {
+  id: string;
+  slot: string;
+  title: string;
+  message: string;
+  active: boolean;
+}
+
+export interface MessageFigures {
+  sent: number;
+  pushed: number;
+  read: number;
+}
+
+export interface AutomationRow {
+  key: AutomationKey;
+  label: string;
+  trigger: string;
+  category: 'motivation' | 'information' | 'update' | 'offer' | 'reward';
+  topic: string;
+  preference: string;
+  timing: 'hour' | 'event';
+  dropInQuietHours: boolean;
+  exemptFromCap: boolean;
+  slots: { key: string; label: string; variables: string[] }[];
+  enabled: boolean;
+  hour: number | null;
+  /** 0 = Monday … 6 = Sunday. */
+  weekdays: number[];
+  params: Record<string, unknown>;
+  paramsDefaults: Record<string, unknown>;
+  templates: AutomationTemplate[];
+  customised: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  last7Days: MessageFigures;
+}
+
+export interface CampaignRow {
+  id: string;
+  name: string;
+  category: 'motivation' | 'information' | 'update' | 'offer';
+  title: string;
+  message: string;
+  link: string | null;
+  segment: Record<string, unknown>;
+  schedule: { kind: 'once' | 'daily' | 'weekly'; date: string | null; weekdays: number[]; hour: number };
+  startsOn: string | null;
+  endsOn: string | null;
+  enabled: boolean;
+  state: 'scheduled' | 'finished' | 'off';
+  lastRunAt: string | null;
+  createdBy: string | null;
+  updatedAt: string | null;
+  last30Days: MessageFigures;
+}
+
+export interface Automations {
+  settings: {
+    enabled: boolean;
+    maxPerDay: number;
+    activeWithinDays: number;
+    defaults: { enabled: boolean; maxPerDay: number; activeWithinDays: number };
+  };
+  timezone: string;
+  links: string[];
+  campaignVariables: string[];
+  categories: string[];
+  automations: AutomationRow[];
+  campaigns: CampaignRow[];
+}
+
+export interface AutomationPreview {
+  key: AutomationKey;
+  applies: boolean;
+  clock: { zone: string; hour: number; day: string; weekday: number };
+  title: string | null;
+  message: string | null;
+  templateId: string | null;
+  link: string | null;
+  sent: { status: string; push: string } | null;
+}

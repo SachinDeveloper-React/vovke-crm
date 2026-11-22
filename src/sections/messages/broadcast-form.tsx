@@ -20,7 +20,7 @@ import { sendBroadcast, type BroadcastState } from './actions';
 
 const TOPICS = ['system', 'steps', 'coins', 'challenge', 'reward', 'health', 'hydration', 'streak', 'workout'] as const;
 
-/** The member's own eight consent switches, as their settings screen lists them. */
+/** The member's own nine consent switches, as their settings screen lists them. */
 const SWITCHES = [
   'activity',
   'coins',
@@ -30,6 +30,7 @@ const SWITCHES = [
   'announcements',
   'referrals',
   'health',
+  'motivation',
 ] as const;
 
 /**

@@ -24,7 +24,7 @@ import { paths } from '@/src/layout/paths';
 import type { CatalogueItem, ShopCategory, ShopSettings } from '@/src/lib/types';
 
 import { deleteProduct, saveProduct, type CatalogueActionState } from './actions';
-import { MODES, PriceFields, ShelfFields } from './item-forms';
+import { PaymentModeField, PriceFields, ShelfFields } from './item-forms';
 
 const BADGES = ['', 'bestseller', 'popular', 'new_arrival', 'limited'] as const;
 
@@ -108,22 +108,7 @@ export function ProductForm({ item, shop, shelves }: { item: CatalogueItem; shop
         />
 
         <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField
-            select
-            name="paymentMode"
-            label="How it may be bought"
-            size="small"
-            fullWidth
-            defaultValue={item.paymentMode ?? ''}
-            disabled={pending}
-            helperText={`The shop’s own mode is “${shop.paymentMode}”`}
-          >
-            {MODES.map(mode => (
-              <MenuItem key={mode.value} value={mode.value}>
-                {mode.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          <PaymentModeField shop={shop} value={item.paymentMode} disabled={pending} />
         </Grid>
         <ShelfFields
           shelves={shelves}

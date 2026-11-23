@@ -122,8 +122,8 @@ const PRODUCT_COLUMNS: Column[] = [
     header: 'Payment mode',
     width: 16,
     needed: 'No',
-    note: 'coins, money or mixed. “both” reads as mixed, “cash” and “rupees” as money. Leave it blank (or write “shop”) and it follows ⚙ commerce.paymentMode. Anything else is refused.',
-    values: ['money', 'mixed', 'coins', '', 'money'],
+    note: 'coins, money or mixed. “both” reads as mixed, “cash” and “rupees” as money. Leave it blank (or write “shop”) and it follows ⚙ commerce.paymentMode. Anything else is refused — and while no payment gateway is connected, so are money and mixed: write coins or leave it blank.',
+    values: ['coins', '', 'coins', '', 'coins'],
   },
   {
     header: 'Stock',

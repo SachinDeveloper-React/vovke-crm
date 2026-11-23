@@ -21,9 +21,10 @@ import { Label } from '@/src/components/label';
 import { DialogButton } from '@/src/components/ui/dialog-button';
 import { coins, number, rupees } from '@/src/lib/format';
 import { slugify } from '@/src/lib/slug';
-import type { CatalogueItem, ShopCategory, ShopSettings } from '@/src/lib/types';
+import type { CatalogueItem, PaidWith, ShopCategory, ShopSettings } from '@/src/lib/types';
 
 import { patchItem, retireItem, saveItem, setStock, type CatalogueActionState } from './actions';
+import { moneyOff, needsGateway } from './payment-mode';
 
 const BADGES = ['', 'bestseller', 'popular', 'new_arrival', 'limited'] as const;
 
@@ -33,6 +34,79 @@ export const MODES = [
   { value: 'money', label: 'Money only' },
   { value: 'mixed', label: 'Coins + money' },
 ] as const;
+
+/**
+ * How a product may be bought, as a dropdown.
+ *
+ * With no payment gateway the two money modes are offered disabled (D-109):
+ * the API refuses them, and this says so before anybody tries. A product
+ * already set to one keeps showing it — it sells for coins until a gateway
+ * is connected — and can be moved to coins, though not back.
+ */
+export function PaymentModeField({
+  shop,
+  value,
+  disabled,
+  compact,
+}: {
+  shop: ShopSettings;
+  value: PaidWith | null | undefined;
+  disabled?: boolean;
+  compact?: boolean;
+}) {
+  const off = moneyOff(shop);
+  const options = MODES.map(mode => {
+    const locked = off && needsGateway(mode.value);
+    return (
+      <MenuItem key={mode.value} value={mode.value} disabled={locked}>
+        {compact ? (mode.value === '' ? 'shop' : mode.value) : mode.label}
+        {locked && !compact ? ' — needs a payment gateway' : ''}
+      </MenuItem>
+    );
+  });
+
+  if (compact) {
+    return (
+      <TextField select name="paymentMode" label="Mode" size="small" defaultValue={value ?? ''} disabled={disabled} sx={{ width: 120 }}>
+        {options}
+      </TextField>
+    );
+  }
+  return (
+    <TextField
+      select
+      name="paymentMode"
+      label="How it may be bought"
+      size="small"
+      fullWidth
+      defaultValue={value ?? ''}
+      disabled={disabled}
+      helperText={
+        off
+          ? value && needsGateway(value)
+            ? 'Sells for coins until a payment gateway is connected'
+            : 'Coins only: no payment gateway is connected'
+          : `The shop’s own mode is “${shop.paymentMode}”`
+      }
+    >
+      {options}
+    </TextField>
+  );
+}
+
+/** The catalogue's one line about the gateway, shown only while there is none (D-109). */
+export function NoGatewayNotice({ shop }: { shop: ShopSettings }) {
+  if (!moneyOff(shop)) return null;
+  const configured = shop.configuredPaymentMode;
+  return (
+    <Alert severity="info" variant="outlined">
+      No payment gateway is connected, so every product sells for coins only, and “Money only” and “Coins + money” cannot be
+      picked. A product already set to one of them keeps that setting for the day a gateway is connected
+      {configured && configured !== 'coins' ? `, and so does the shop’s own mode (“${configured}”)` : ''} — until then members see
+      it in coins.
+    </Alert>
+  );
+}
 
 /**
  * The two shelf dropdowns, and why the second one is a dropdown at all.
@@ -287,22 +361,7 @@ export function ItemForm({ shop, shelves, item }: { shop: ShopSettings; shelves:
         />
 
         <Grid size={{ xs: 12, sm: 4 }}>
-          <TextField
-            select
-            name="paymentMode"
-            label="How it may be bought"
-            size="small"
-            fullWidth
-            defaultValue={item?.paymentMode ?? ''}
-            disabled={pending}
-            helperText={`The shop’s own mode is “${shop.paymentMode}”`}
-          >
-            {MODES.map(mode => (
-              <MenuItem key={mode.value} value={mode.value}>
-                {mode.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          <PaymentModeField shop={shop} value={item?.paymentMode} disabled={pending} />
         </Grid>
         <ShelfFields
           shelves={shelves}
@@ -450,7 +509,7 @@ export function NewProductButton({ shop, shelves }: { shop: ShopSettings; shelve
 }
 
 /** The three edits a shelf actually needs in a hurry, on the row itself. */
-export function QuickEdit({ item }: { item: CatalogueItem }) {
+export function QuickEdit({ item, shop }: { item: CatalogueItem; shop: ShopSettings }) {
   const [priceState, priceAction, pricePending] = useActionState<CatalogueActionState, FormData>(patchItem, {});
   const [stockState, stockAction, stockPending] = useActionState<CatalogueActionState, FormData>(setStock, {});
   const [retireState, retireAction, retirePending] = useActionState<CatalogueActionState, FormData>(retireItem, {});
@@ -484,21 +543,7 @@ export function QuickEdit({ item }: { item: CatalogueItem }) {
           sx={{ width: 110 }}
           slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
         />
-        <TextField
-          select
-          name="paymentMode"
-          label="Mode"
-          size="small"
-          defaultValue={item.paymentMode ?? ''}
-          disabled={pricePending}
-          sx={{ width: 120 }}
-        >
-          {MODES.map(mode => (
-            <MenuItem key={mode.value} value={mode.value}>
-              {mode.value === '' ? 'shop' : mode.value}
-            </MenuItem>
-          ))}
-        </TextField>
+        <PaymentModeField shop={shop} value={item.paymentMode} disabled={pricePending} compact />
         <Button type="submit" size="small" variant="outlined" loading={pricePending}>
           Save
         </Button>

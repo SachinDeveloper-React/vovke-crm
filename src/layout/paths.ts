@@ -106,6 +106,8 @@ export const paths = {
     releases: `${ROOTS.DASHBOARD}/releases`,
     /** The launcher icon phones show: everyday, festive, scheduled (RULES DV13). */
     appIcon: `${ROOTS.DASHBOARD}/app-icon`,
+    /** Maintenance mode: the switch, its words, and the testers who carry on (RULES DV14). */
+    maintenance: `${ROOTS.DASHBOARD}/maintenance`,
     /** What the app has told everybody, and what became of it. */
     notifications: `${ROOTS.DASHBOARD}/notifications`,
     /** The support queue, and one conversation in full. */

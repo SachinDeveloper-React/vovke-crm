@@ -15,6 +15,8 @@ import { useStaff } from '@/src/components/staff/staff-context';
 import { TextLink } from '@/src/components/ui/nav';
 import { signOut } from '@/src/lib/session';
 
+import { MaintenanceFlagButton } from './maintenance-flag';
+
 /**
  * The header's right side: which API this panel is pointed at, the color
  * scheme, and the way out.
@@ -39,6 +41,8 @@ export function RightArea({ apiBase, timezone }: { apiBase: string; timezone: st
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+      <MaintenanceFlagButton />
+
       <Tooltip title={`Reading ${apiBase} · days bucketed in ${timezone}`}>
         <Box
           sx={{

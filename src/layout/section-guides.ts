@@ -969,6 +969,25 @@ export const sectionGuides: SectionGuide[] = [
       'A new icon needs new art and a new build before it can be chosen here.',
     ],
   },
+  {
+    pattern: '/dashboard/maintenance',
+    group: 'Decide',
+    title: 'Maintenance',
+    question: 'Is the app open to members right now, and who can still get in?',
+    what:
+      'One switch that takes the app down for members while the team works on it. Every member sees the maintenance screen, in the words written here; testers and staff keep using the app, with a strip at the top that says maintenance is on.',
+    how: [
+      'Add the testers first — by email, phone or member id — so somebody can check the app while it is down. Panel accounts get in too, when they sign in to the app with the same email, verified there.',
+      'Turn it on with a title, a message and, if you can promise one, the time you expect to be back.',
+      'Turn it off when the work is done. Phones on the maintenance screen notice within half a minute and open by themselves.',
+    ],
+    writes: ['Turn maintenance on or off', 'Reword the maintenance screen', 'Add or remove a tester'],
+    careful: [
+      'Every member is stopped the moment it is on, mid-purchase included — nothing they send is taken until it is off. Steps keep counting on the phone and sync afterwards.',
+      'A signed-out tester gets in through “Team sign-in” on the maintenance screen. New accounts cannot be made while it is on.',
+      'An app build from before this page existed shows members an error rather than the maintenance screen.',
+    ],
+  },
   // ── Team (RULES Z9) ──────────────────────────────────────────────────────
   {
     pattern: '/dashboard/staff',

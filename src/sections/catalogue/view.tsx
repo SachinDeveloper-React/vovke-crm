@@ -23,7 +23,8 @@ import type { Catalogue, Categories } from '@/src/lib/types';
 
 import { AddCategoryButton } from './category-forms';
 import { ImportProductsButton } from './import-form';
-import { NewProductButton, QuickEdit } from './item-forms';
+import { NewProductButton, NoGatewayNotice, QuickEdit } from './item-forms';
+import { modeSource, moneyOff } from './payment-mode';
 
 export type CatalogueQuery = {
   q: string;
@@ -70,7 +71,7 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
 
   const out = data.filter(item => item.stock.out).length;
   const low = data.filter(item => item.stock.low).length;
-  const coinsOnly = data.filter(item => (item.paymentMode ?? shop.paymentMode) === 'coins').length;
+  const coinsOnly = data.filter(item => item.effectivePaymentMode === 'coins').length;
 
   return (
     <Stack spacing={3}>
@@ -84,6 +85,8 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
           Shelves &amp; subcategories
         </LinkButton>
       </Stack>
+
+      <NoGatewayNotice shop={shop} />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -101,7 +104,11 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
             value={shop.paymentMode}
             icon="solar:wallet-money-bold-duotone"
             goodDirection="none"
-            hint={`1 coin = ${rupees(shop.coinValuePaise)} · coins cover ${percent(shop.coinShareMin, 0)}–${percent(shop.coinShareMax, 0)} of a mixed order`}
+            hint={
+              moneyOff(shop)
+                ? `1 coin = ${rupees(shop.coinValuePaise)} · no payment gateway, so coins only`
+                : `1 coin = ${rupees(shop.coinValuePaise)} · coins cover ${percent(shop.coinShareMin, 0)}–${percent(shop.coinShareMax, 0)} of a mixed order`
+            }
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -235,7 +242,7 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
                   {item.effectivePaymentMode}
                 </Label>
                 <Typography variant="caption" sx={{ color: 'text.disabled' }}>
-                  {item.paymentMode ? 'its own' : 'the shop’s'}
+                  {modeSource(item)}
                 </Typography>
               </Stack>,
               <Stack key="price" spacing={0.25} sx={{ textAlign: 'right' }}>
@@ -265,7 +272,7 @@ export async function CatalogueView({ query }: { query: CatalogueQuery }) {
                   {number(item.sold.orders)} order(s)
                 </Typography>
               </Stack>,
-              <QuickEdit key="edit" item={item} />,
+              <QuickEdit key="edit" item={item} shop={shop} />,
             ],
           }))}
           empty={query.q || query.category || query.paymentMode ? 'Nothing matches those filters.' : 'The shelf is empty.'}

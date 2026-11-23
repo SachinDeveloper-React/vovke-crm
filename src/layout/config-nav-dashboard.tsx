@@ -289,6 +289,13 @@ export const navData: NavGroupData[] = [
         icon: <Iconify icon="solar:confetti-bold-duotone" />,
         caption: 'Everyday and festive launcher icons',
       },
+      {
+        title: 'Maintenance',
+        path: paths.dashboard.maintenance,
+        permission: 'maintenance.view',
+        icon: <Iconify icon="solar:shield-warning-bold-duotone" />,
+        caption: 'Take the app down, keep testers in',
+      },
     ],
   },
 ];

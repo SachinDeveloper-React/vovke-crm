@@ -1429,6 +1429,7 @@ export interface CatalogueItem {
   subcategory: string | null;
   /** Its own mode, or null to follow the shop's. */
   paymentMode: PaidWith | null;
+  /** The mode in force: its own or the shop's — coins for everything while there is no payment gateway (D-109). */
   effectivePaymentMode: PaidWith;
   emoji: string | null;
   imageUrl: string | null;
@@ -1454,7 +1455,12 @@ export interface CatalogueItem {
 }
 
 export interface ShopSettings {
+  /** The shop's mode in force: coins while there is no payment gateway, whatever ⚙ says (D-109). */
   paymentMode: PaidWith;
+  /** What ⚙ `commerce.paymentMode` says — in force again once a gateway is connected. Absent on an older API. */
+  configuredPaymentMode?: PaidWith;
+  /** False while there is no payment gateway: products sell for coins only and money modes are refused. Absent on an older API. */
+  moneyPayments?: boolean;
   coinValuePaise: number;
   coinShareMin: number;
   coinShareMax: number;
@@ -2962,4 +2968,28 @@ export interface AutomationPreview {
   templateId: string | null;
   link: string | null;
   sent: { status: string; push: string } | null;
+}
+
+/** `GET /admin/maintenance` — the switch, the words members see, and who carries on (RULES DV14). */
+export interface MaintenanceSettings {
+  maintenance: {
+    enabled: boolean;
+    title: string;
+    message: string;
+    /** When the team expects to be back; null when nothing was promised. */
+    endsAt: string | null;
+    startedAt: string | null;
+    startedBy: string | null;
+  };
+  /** Members marked as testers: they use the app through maintenance, with a strip saying it is on. */
+  testers: { id: string; name: string; email: string | null; phone: string | null; emailVerified: boolean }[];
+  /** Active panel accounts — each can use the app too, signed in with the same email once it is verified there. */
+  staffAccounts: number;
+}
+
+/** `GET /admin/maintenance/flag` — what the header reads on every page. */
+export interface MaintenanceFlag {
+  enabled: boolean;
+  startedAt: string | null;
+  endsAt: string | null;
 }

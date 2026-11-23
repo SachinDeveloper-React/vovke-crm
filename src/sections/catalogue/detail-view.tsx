@@ -19,7 +19,8 @@ import { ago, coins, dateTime, decimal, number, percent, rupees } from '@/src/li
 import { paths } from '@/src/layout/paths';
 import type { Categories, ItemInsight } from '@/src/lib/types';
 
-import { QuickEdit } from './item-forms';
+import { NoGatewayNotice, QuickEdit } from './item-forms';
+import { modeSource } from './payment-mode';
 import { ProductDelete, ProductForm } from './product-forms';
 import { ReviewDelete, ReviewEdit } from '../reviews/review-forms';
 
@@ -63,7 +64,7 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
           variant="soft"
         >
           {item.effectivePaymentMode}
-          {item.paymentMode ? '' : ' (the shop’s)'}
+          {item.paymentMode === item.effectivePaymentMode ? '' : ` (${modeSource(item)})`}
         </Label>
         {!item.active && (
           <Label color="error" variant="soft">
@@ -79,6 +80,8 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
           All items
         </LinkButton>
       </Stack>
+
+      <NoGatewayNotice shop={shop} />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -142,7 +145,7 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
           <Panel title="As the till reads it" subtitle="Prices in paise on the wire, rupees here">
             <Kv
               items={[
-                { label: 'Paid with', value: `${item.effectivePaymentMode}${item.paymentMode ? ' (its own)' : ' (the shop’s)'}` },
+                { label: 'Paid with', value: `${item.effectivePaymentMode} (${modeSource(item)})` },
                 { label: 'Price', value: `${rupees(item.price)} · ${coins(item.coinPrice)} coins`, hint: 'coins rounded up, as the till does' },
                 { label: 'Struck through', value: item.mrp ? rupees(item.mrp) : 'nothing' },
                 { label: 'Sizes', value: item.sizes.length > 0 ? item.sizes.join(', ') : 'one size' },
@@ -160,7 +163,7 @@ export async function ProductDetailView({ itemId }: { itemId: string }) {
             subtitle="Price, mode, stock, and the shelf"
             note="The same three edits as on the list, so a page opened from a stock alert needs nothing else."
           >
-            <QuickEdit item={item} />
+            <QuickEdit item={item} shop={shop} />
           </Panel>
         </Grid>
       </Grid>

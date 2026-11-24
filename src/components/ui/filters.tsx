@@ -284,7 +284,11 @@ export function OffsetPager({
 
 export function FilterBar({ children }: { children: React.ReactNode }) {
   return (
-    <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+    // Gap only, no `spacing`: Stack's spacing is a left margin on every child
+    // but the first, so a filter that wrapped onto a new line (every phone)
+    // started 12px in from the one above it. The 24px between filters on one
+    // line is what spacing + gap used to add up to.
+    <Stack direction="row" sx={{ flexWrap: 'wrap', columnGap: 3, rowGap: 1.5, alignItems: 'center' }}>
       {children}
     </Stack>
   );

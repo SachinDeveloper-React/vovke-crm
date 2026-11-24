@@ -102,6 +102,11 @@ export async function MemberInstalls({ userId }: { userId: string }) {
                     { label: 'Last active', value: dateTime(install.lastActiveAt, zone), hint: ago(install.lastActiveAt) },
                     { label: 'First build', value: install.app.firstVersion ?? '—' },
                     { label: 'Bundle', value: install.app.bundleId ?? '—' },
+                    {
+                      label: 'OTA update',
+                      value: install.app.otaUpdate ?? 'built in',
+                      hint: install.app.otaUpdate ? 'matches the ID in the Hot Updater console' : 'the JavaScript the build shipped with',
+                    },
                     { label: 'Sign-ins', value: number(install.logins) },
                     { label: 'Signed in since', value: install.signedInAt ? dateTime(install.signedInAt, zone) : '—' },
                     { label: 'Last signed out', value: install.lastSignedOutAt ? dateTime(install.lastSignedOutAt, zone) : '—' },

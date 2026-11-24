@@ -78,7 +78,9 @@ export async function MediaLibrary({ kind, q }: { kind?: string; q?: string }) {
       ) : (
         <Grid container spacing={2}>
           {page.data.map(asset => (
-            <Grid key={asset.id} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
+            // Six across only from xl: at lg the side nav takes 300px, and six
+            // cards in what is left are too narrow for a card's own buttons.
+            <Grid key={asset.id} size={{ xs: 6, sm: 4, md: 3, xl: 2 }}>
               <MediaCard asset={asset} />
             </Grid>
           ))}

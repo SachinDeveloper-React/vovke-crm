@@ -107,7 +107,14 @@ export interface Install {
     screen: { w: number; h: number; scale: number } | null;
     hasBiometrics: boolean | null;
   };
-  app: { version: string | null; build: string | null; firstVersion: string | null; bundleId: string | null };
+  app: {
+    version: string | null;
+    build: string | null;
+    firstVersion: string | null;
+    bundleId: string | null;
+    /** The over-the-air update it runs (D-111); null for the bundle inside the build. Absent on an older API. */
+    otaUpdate?: string | null;
+  };
   installedAt: string | null;
   lastActiveAt: string | null;
   revokedAt: string | null;

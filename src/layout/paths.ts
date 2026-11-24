@@ -121,5 +121,7 @@ export const paths = {
     referralCards: `${ROOTS.DASHBOARD}/referral-cards`,
     /** Every other config key, section by section. */
     config: `${ROOTS.DASHBOARD}/config`,
+    /** The support email and numbers, the address, and every public link (RULES P21). */
+    contact: `${ROOTS.DASHBOARD}/contact`,
   },
 } as const;

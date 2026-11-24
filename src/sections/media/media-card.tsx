@@ -6,6 +6,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
+import IconButton from '@mui/material/IconButton';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -109,35 +110,43 @@ export function MediaCard({ asset }: { asset: MediaAsset }) {
           </Typography>
         )}
 
-        <Stack direction="row" spacing={0.5}>
-          <Button size="small" onClick={copy} sx={{ flex: 1 }}>
-            {copied ? 'Copied' : 'Copy URL'}
-          </Button>
-          <DialogIconButton
-            icon="solar:pen-bold-duotone"
-            tooltip={`Rename ${asset.filename}`}
-            title="Rename the image"
-            subtitle="The link stays the same, so every product already showing it keeps showing it."
-          >
-            <MediaRenameForm asset={asset} />
-          </DialogIconButton>
-
-          {arming ? (
-            <Stack component="form" action={action} direction="row" spacing={0.5}>
-              <input type="hidden" name="id" value={asset.id} />
-              <Button size="small" type="submit" color="error" disabled={pending}>
-                {pending ? '…' : 'Sure?'}
-              </Button>
-              <Button size="small" onClick={() => setArming(false)} disabled={pending}>
-                No
-              </Button>
-            </Stack>
-          ) : (
-            <Button size="small" color="error" onClick={() => setArming(true)}>
-              <Iconify icon="solar:trash-bin-trash-bold-duotone" width={16} />
+        {/*
+          A card in a six-across grid is ~150px inside, so the row is one
+          text button and two icon buttons; a text Button's 64px minimum on
+          the bin is what squeezed "Copy URL" onto two lines and pushed the
+          bin into the card's edge. Armed, the confirmation takes the whole
+          row rather than squeezing in beside the others.
+        */}
+        {arming ? (
+          <Stack component="form" action={action} direction="row" spacing={0.5}>
+            <input type="hidden" name="id" value={asset.id} />
+            <Button size="small" type="submit" color="error" disabled={pending} sx={{ flex: 1, minWidth: 0 }}>
+              {pending ? '…' : 'Delete'}
             </Button>
-          )}
-        </Stack>
+            <Button size="small" color="inherit" onClick={() => setArming(false)} disabled={pending} sx={{ flex: 1, minWidth: 0 }}>
+              Cancel
+            </Button>
+          </Stack>
+        ) : (
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Button size="small" onClick={copy} sx={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap' }}>
+              {copied ? 'Copied' : 'Copy URL'}
+            </Button>
+            <DialogIconButton
+              icon="solar:pen-bold-duotone"
+              tooltip={`Rename ${asset.filename}`}
+              title="Rename the image"
+              subtitle="The link stays the same, so every product already showing it keeps showing it."
+            >
+              <MediaRenameForm asset={asset} />
+            </DialogIconButton>
+            <Tooltip title={`Delete ${asset.filename}`}>
+              <IconButton size="small" color="error" onClick={() => setArming(true)} aria-label={`Delete ${asset.filename}`}>
+                <Iconify icon="solar:trash-bin-trash-bold-duotone" width={18} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        )}
       </Stack>
     </Card>
   );

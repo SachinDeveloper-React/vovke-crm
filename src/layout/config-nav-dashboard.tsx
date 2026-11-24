@@ -225,6 +225,13 @@ export const navData: NavGroupData[] = [
         caption: 'The refer-a-friend card, screen by screen',
       },
       {
+        title: 'Contact & links',
+        path: paths.dashboard.contact,
+        permission: 'config.view',
+        icon: <Iconify icon="solar:phone-calling-rounded-bold-duotone" />,
+        caption: 'Support email, phone, address, links',
+      },
+      {
         title: 'App config',
         path: paths.dashboard.config,
         permission: 'config.view',

@@ -876,6 +876,27 @@ export const sectionGuides: SectionGuide[] = [
     ],
   },
   {
+    pattern: '/dashboard/contact',
+    group: 'System',
+    title: 'Contact & links',
+    question: 'How do members reach us, and where do our links go?',
+    what:
+      'The support email, phone and WhatsApp numbers, support hours, the company’s name and address, the Grievance Officer, the privacy, terms and licence links, the invite-link address, the store links and the social profiles. The app’s Help and About screens, the invite links members share and the public website all read these live.',
+    how: [
+      'Change a box and press Save on its group. Only what you changed is saved.',
+      'Type numbers the way you read them — “98765 43210” or “+91 98765-43210” both become +919876543210. Links typed without https:// get it added.',
+      'Empty a box that says it may be empty to take that thing off the app and the website — the phone number, WhatsApp, a social profile, the tracking link.',
+      '“Default” puts a box back to what the code ships, and it then follows the code from there on.',
+    ],
+    writes: ['Change a contact detail or a link', 'Put one back to its default'],
+    careful: [
+      'These reach every member and every visitor at once. A wrong number is a wrong number on every phone, so read it back after saving.',
+      'The app shows a change the next time the screen opens. The website shows it at once when its refresh hook is set up (SITE_REVALIDATE_URL on the API), otherwise within the hour.',
+      'The privacy-policy link is the one Google checks for Health Connect: it must open a real page.',
+      'A box in red still points at vokve.app, a domain the company never owned. Put it back to the default (vokve.com) or type the right one.',
+    ],
+  },
+  {
     pattern: '/dashboard/config',
     group: 'System',
     title: 'App config',

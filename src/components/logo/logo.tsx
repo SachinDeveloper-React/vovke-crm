@@ -59,25 +59,20 @@ export function Logo({
     } as const;
 
     const logo = isSingle ? (
-        /** The mini sidebar has 40px: too narrow for the wordmark, so the V alone. */
+        /**
+         * The mini sidebar has 40px: too narrow for the wordmark, so the app
+         * icon alone — the same file as the tab's icon, written by the app's
+         * `npm run icons:app` from the default launcher icon.
+         */
         <Box
-            component="svg"
-            viewBox="0 0 40 40"
-            role="img"
-            aria-label={CONFIG.appName}
-            sx={{ display: 'block', width: '100%', height: '100%' }}
-        >
-            <rect width="36" height="36" rx="10" fill="var(--mui-palette-primary-main)" />
-            {/* The V, as two strokes meeting at the foot. */}
-            <path
-                d="M10.5 11 L18 25.5 L25.5 11"
-                fill="none"
-                stroke="var(--mui-palette-primary-contrastText)"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-            />
-        </Box>
+            component="img"
+            src="/icons/icon-192.png"
+            alt={CONFIG.appName}
+            width={192}
+            height={192}
+            draggable={false}
+            sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'contain' }}
+        />
     ) : (
         <>
             <Box

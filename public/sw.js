@@ -30,12 +30,12 @@
  *
  * Bump VERSION to throw away every cache this worker made.
  */
-const VERSION = 'v1';
+const VERSION = 'v2'; // v2: the arrow icons replaced the V under the same /icons/ names
 const STATIC_CACHE = `vokve-static-${VERSION}`;
 const SHELL_CACHE = `vokve-shell-${VERSION}`;
 const IMAGE_CACHE = `vokve-images-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
-const SHELL = [OFFLINE_URL, '/icons/icon.svg', '/icons/icon-192.png', '/favicon.ico'];
+const SHELL = [OFFLINE_URL, '/icons/icon-192.png', '/favicon.ico'];
 /** A build is a few hundred files; old builds' hashes are trimmed past this. */
 const MAX_STATIC_ENTRIES = 400;
 /** A media-library page shows up to 60; this keeps the last few pages' worth. */

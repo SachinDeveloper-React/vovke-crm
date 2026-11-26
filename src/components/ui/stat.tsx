@@ -52,7 +52,9 @@ export function Stat({
         </Typography>
       </Stack>
 
-      <Typography variant="h3" sx={{ lineHeight: 1.1 }}>
+      {/* A value with no space in it (a config key, an email) breaks onto the
+          next line rather than running out of the card, which clips it. */}
+      <Typography variant="h3" sx={{ lineHeight: 1.1, minWidth: 0, overflowWrap: 'anywhere' }}>
         {value}
       </Typography>
 

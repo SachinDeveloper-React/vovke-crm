@@ -26,9 +26,8 @@ export const metadata: Metadata = {
   applicationName: "Vokve Admin",
   // Nothing in here is for anybody but the operator.
   robots: { index: false, follow: false },
-  // `app/favicon.ico` and `app/manifest.ts` are linked by convention; these are the rest.
+  // `app/favicon.ico` (the tab) and `app/manifest.ts` are linked by convention; this is the rest.
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
   appleWebApp: { capable: true, title: "Vokve Admin", statusBarStyle: "default" },

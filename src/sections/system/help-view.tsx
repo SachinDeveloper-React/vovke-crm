@@ -97,10 +97,15 @@ export async function HelpView({ query }: { query: HelpQuery }) {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Stat
             label="Where the tiles come from"
-            value="⚙ support.topics"
+            value="App config"
             icon="solar:tuning-square-bold-duotone"
             goodDirection="none"
-            hint="the help page's own rows are config, not this page"
+            hint={
+              <>
+                the help page&apos;s own rows are ⚙ <Mono>support.topics</Mono> on{' '}
+                <TextLink href={{ pathname: paths.dashboard.config }}>App config</TextLink>, not this page
+              </>
+            }
           />
         </Grid>
       </Grid>

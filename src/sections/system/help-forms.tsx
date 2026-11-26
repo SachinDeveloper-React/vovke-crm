@@ -65,6 +65,7 @@ export function FaqForm({ categories, article }: { categories: string[]; article
         <Stack component="form" action={action} spacing={2}>
           <Said state={state} />
           <input type="hidden" name="active" value="off" />
+          <input type="hidden" name="website" value="off" />
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 5 }}>
@@ -152,6 +153,10 @@ export function FaqForm({ categories, article }: { categories: string[]; article
                 control={<Switch name="active" defaultChecked={article?.active ?? true} disabled={pending} />}
                 label={<Typography variant="body2">Showing in the help centre</Typography>}
               />
+              <FormControlLabel
+                control={<Switch name="website" defaultChecked={article?.website ?? true} disabled={pending} />}
+                label={<Typography variant="body2">Also on the website (vokve.com/faq, and the home page if picked there)</Typography>}
+              />
             </Grid>
           </Grid>
 
@@ -179,6 +184,7 @@ export function FaqQuickEdit({ article, categories }: { article: FaqRow; categor
       <Stack component="form" action={patchAction} direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
         <input type="hidden" name="id" value={article.id} />
         <input type="hidden" name="active" value="off" />
+        <input type="hidden" name="website" value="off" />
         <input type="hidden" name="note" value="quick edit" />
         <TextField
           select
@@ -207,6 +213,11 @@ export function FaqQuickEdit({ article, categories }: { article: FaqRow; categor
         <FormControlLabel
           control={<Switch name="active" size="small" defaultChecked={article.active} disabled={patchPending} />}
           label={<Typography variant="caption">Show</Typography>}
+          sx={{ mr: 0 }}
+        />
+        <FormControlLabel
+          control={<Switch name="website" size="small" defaultChecked={article.website} disabled={patchPending} />}
+          label={<Typography variant="caption">Web</Typography>}
           sx={{ mr: 0 }}
         />
         <Button type="submit" size="small" variant="outlined" loading={patchPending}>

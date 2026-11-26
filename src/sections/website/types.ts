@@ -54,6 +54,8 @@ export interface FaqOption {
   question: string;
   category: string;
   active: boolean;
+  /** Off: kept to the app, so the website leaves it out even when picked. */
+  website: boolean;
 }
 
 /** What an editor opens with: the content, its shape, and the lists its special boxes pick from. */

@@ -42,6 +42,7 @@ export async function saveFaq(_previous: HelpActionState, form: FormData): Promi
     tags: list(form, 'tags'),
     sort: Number(text(form, 'sort') || 0),
     active: toggle(form, 'active'),
+    website: toggle(form, 'website'),
     note: text(form, 'note') || undefined,
   });
   if (!result.ok) return { error: result.error };
@@ -50,7 +51,7 @@ export async function saveFaq(_previous: HelpActionState, form: FormData): Promi
   const { article, created } = result.data;
   return {
     ok: `${created ? 'Written' : 'Saved'}: “${article.question}” under ${article.category}${
-      article.active ? ' — members can read it now' : ', hidden for now'
+      article.active ? (article.website ? ' — showing in the app and on the website' : ' — showing in the app only') : ', hidden for now'
     }.`,
   };
 }
@@ -60,6 +61,7 @@ export async function patchFaq(_previous: HelpActionState, form: FormData): Prom
   const id = text(form, 'id');
   const body: Record<string, unknown> = { note: text(form, 'note') || undefined };
   if (form.get('active') !== null) body.active = toggle(form, 'active');
+  if (form.get('website') !== null) body.website = toggle(form, 'website');
   if (form.get('sort') !== null && text(form, 'sort')) body.sort = Number(text(form, 'sort'));
   if (form.get('category') !== null && text(form, 'category')) body.category = text(form, 'category');
 
@@ -68,7 +70,9 @@ export async function patchFaq(_previous: HelpActionState, form: FormData): Prom
 
   revalidatePath('/dashboard/faq');
   return {
-    ok: `${result.data.article.id} is ${result.data.article.active ? 'showing' : 'hidden'} · ${result.data.article.category}.`,
+    ok: `${result.data.article.id} is ${
+      result.data.article.active ? (result.data.article.website ? 'showing in the app and on the website' : 'showing in the app only') : 'hidden'
+    } · ${result.data.article.category}.`,
   };
 }
 

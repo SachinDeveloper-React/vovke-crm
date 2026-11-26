@@ -287,6 +287,7 @@ function ArrayField({ schema, items, value, path, name, bare }: FieldProps & { i
   const list = Array.isArray(value) ? value : [];
 
   if (schema.widget === 'faq-ids') return <FaqPicker value={list as string[]} path={path} schema={schema} name={name} />;
+  if (schema.widget === 'order') return <OrderList value={list} path={path} schema={schema} bare={bare} />;
   if (schema.widget === 'numbers') return <NumbersBox value={list as number[]} path={path} schema={schema} name={name} />;
 
   const itemKind = fieldKind(unwrapNullable(items).inner, name);
@@ -737,7 +738,11 @@ function FaqPicker({ value, path, schema, name }: { value: string[]; path: strin
               <Typography variant="body2">{option?.question ?? id}</Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {option?.category}
-                {option && !option.active ? ' · hidden in the Help centre — not shown' : ''}
+                {option && !option.active
+                  ? ' · hidden in the Help centre — not shown'
+                  : option && !option.website
+                    ? ' · kept to the app — not shown on the website'
+                    : ''}
               </Typography>
             </Stack>
           </li>
@@ -752,7 +757,7 @@ function FaqPicker({ value, path, schema, name }: { value: string[]; path: strin
               key={key}
               {...rest}
               size="small"
-              color={option && !option.active ? 'warning' : 'default'}
+              color={option && (!option.active || !option.website) ? 'warning' : 'default'}
               label={`${index + 1}. ${option?.question ?? `${id} (missing)`}`}
             />
           );
@@ -767,6 +772,79 @@ function FaqPicker({ value, path, schema, name }: { value: string[]; path: strin
         />
       )}
     />
+  );
+}
+
+/**
+ * A fixed set of things in an order of the editor's choosing, each with a
+ * switch — the home page's sections. Nothing is added or removed here, so
+ * the list cannot lose a section or name one twice; it only moves them and
+ * switches them off.
+ */
+function OrderList({ value, path, schema, bare }: { value: unknown[]; path: string; schema: JsonSchema; bare?: boolean }) {
+  const { onChange, disabled, errors } = useEditor();
+  const rows = value.filter((entry): entry is { id: string; show: boolean } =>
+    Boolean(entry && typeof entry === 'object' && typeof (entry as { id?: unknown }).id === 'string'),
+  );
+  const move = (from: number, to: number) => {
+    const next = rows.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved!);
+    onChange(path, next);
+  };
+  const flip = (index: number, show: boolean) => onChange(path, rows.map((row, i) => (i === index ? { ...row, show } : row)));
+
+  return (
+    <Stack spacing={1}>
+      {!bare && <Typography variant="subtitle2">{labelFor('layout', schema)}</Typography>}
+      {errors[path] && <Alert severity="error">{errors[path]}</Alert>}
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+        The hero is always at the top. These follow it, top to bottom.
+      </Typography>
+      {rows.map((row, index) => (
+        <Stack
+          key={row.id}
+          direction="row"
+          spacing={1}
+          sx={{
+            alignItems: 'center',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1.5,
+            pl: 1.5,
+            pr: 0.5,
+            py: 0.25,
+            opacity: row.show ? 1 : 0.6,
+          }}
+        >
+          <Typography variant="body2" sx={{ width: 28, color: 'text.disabled', fontFamily: 'monospace' }}>
+            {String(index + 1).padStart(2, '0')}
+          </Typography>
+          <Typography variant="body2" sx={{ flex: 1, fontWeight: 600 }}>
+            {labelFor(row.id)}
+          </Typography>
+          <FormControlLabel
+            control={<Switch size="small" checked={row.show} disabled={disabled} onChange={(_event, checked) => flip(index, checked)} />}
+            label={<Typography variant="caption">{row.show ? 'Shown' : 'Hidden'}</Typography>}
+            sx={{ mr: 0.5 }}
+          />
+          <Tooltip title="Move up">
+            <span>
+              <IconButton size="small" disabled={disabled || index === 0} onClick={() => move(index, index - 1)}>
+                <Iconify icon="solar:alt-arrow-up-linear" width={18} />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Move down">
+            <span>
+              <IconButton size="small" disabled={disabled || index === rows.length - 1} onClick={() => move(index, index + 1)}>
+                <Iconify icon="solar:alt-arrow-down-linear" width={18} />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+      ))}
+    </Stack>
   );
 }
 

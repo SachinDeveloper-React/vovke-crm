@@ -2299,6 +2299,8 @@ export interface FaqRow {
   tags: string[];
   sort: number;
   active: boolean;
+  /** Also on the public website (RULES P22); off keeps it in the app only. */
+  website: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -2309,7 +2311,7 @@ export interface Faqs {
   limit: number;
   categories: string[];
   byCategory: { category: string; articles: number; active: number }[];
-  totals: { articles: number; active: number; emptyCategories: string[] };
+  totals: { articles: number; active: number; onWebsite: number; emptyCategories: string[] };
   data: FaqRow[];
 }
 

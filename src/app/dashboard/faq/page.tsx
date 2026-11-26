@@ -33,7 +33,7 @@ async function Loader({ search }: { search: Promise<SearchParams> }) {
           ['', 'account', 'coins', 'orders', 'tracking', 'payments', 'privacy', 'other'] as const,
           '',
         ),
-        state: readEnum(params, 'state', ['any', 'active', 'hidden'] as const, 'any'),
+        state: readEnum(params, 'state', ['any', 'active', 'hidden', 'app-only'] as const, 'any'),
         sort: readEnum(params, 'sort', ['shelf', 'newest', 'question'] as const, 'shelf'),
         limit: readNumber(params, 'limit', 50, 1, 100),
         offset: readNumber(params, 'offset', 0, 0, 100_000),

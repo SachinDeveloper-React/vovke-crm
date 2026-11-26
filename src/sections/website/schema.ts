@@ -22,7 +22,7 @@ export interface JsonSchema {
   default?: unknown;
   title?: string;
   description?: string;
-  /** The API's hint for a special box: `icon`, `date`, `numbers`, `faq-ids`, `href`. */
+  /** The API's hint for a special box: `icon`, `date`, `numbers`, `faq-ids`, `href`, `order`. */
   widget?: string;
   multiline?: boolean;
   minItems?: number;
@@ -219,6 +219,9 @@ const LABELS: Record<string, string> = {
   grievanceOfficerTitle: 'Grievance Officer heading',
   extraLinks: 'More links',
   liveWords: 'Words for the live board',
+  layout: 'Sections and their order',
+  stats: 'Numbers strip',
+  download: 'Download',
   live: 'Show the live challenges',
   companyTitle: 'Company box title',
   bodyTemplate: 'Email text',

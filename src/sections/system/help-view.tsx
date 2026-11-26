@@ -69,7 +69,7 @@ export async function HelpView({ query }: { query: HelpQuery }) {
             value={number(faqs.totals.articles)}
             icon="solar:book-bookmark-bold-duotone"
             goodDirection="none"
-            hint={`${number(faqs.totals.active)} showing`}
+            hint={`${number(faqs.totals.active)} showing · ${number(faqs.totals.onWebsite)} on the website`}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -143,6 +143,7 @@ export async function HelpView({ query }: { query: HelpQuery }) {
           options={[
             { value: 'any', label: 'Everything' },
             { value: 'active', label: 'Showing' },
+            { value: 'app-only', label: 'App only' },
             { value: 'hidden', label: 'Hidden' },
           ]}
           width={150}
@@ -193,6 +194,11 @@ export async function HelpView({ query }: { query: HelpQuery }) {
                   {!article.active && (
                     <Label color="error" variant="soft">
                       hidden
+                    </Label>
+                  )}
+                  {article.active && !article.website && (
+                    <Label color="warning" variant="soft">
+                      app only
                     </Label>
                   )}
                   <Typography variant="caption" sx={{ color: 'text.disabled' }}>

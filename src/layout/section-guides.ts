@@ -806,6 +806,7 @@ export const sectionGuides: SectionGuide[] = [
     what:
       'The articles members search and the guide they follow, written here and read by them with no app release. The page also names the shelves with nothing active on them, because a help-page row that opens an empty list is a tile leading nowhere.',
     how: [
+      'Each article has two switches: “Showing” puts it in the app’s help centre (and is the off switch for everywhere), and “Also on the website” adds it to vokve.com/faq. Turn the second off for an answer that only makes sense inside the app — App only in the State filter lists them.',
       'Write the article the support queue keeps asking for; the subject breakdown on Support is the list.',
       'File it on a shelf with something else on it, or expect the shelf to read as empty.',
       'Hide an article that is wrong but worth keeping; delete one that should never have existed.',
@@ -887,7 +888,7 @@ export const sectionGuides: SectionGuide[] = [
     how: [
       'Press Edit on a page to open its form. Each section of the page is a fold; open the one you came for.',
       'The contact details, store links and social profiles are not here: they are on Contact & links, and every page fills them in.',
-      'The FAQ’s questions are the Help centre’s articles, and the home page’s challenge board is the live list from Challenges — change them there.',
+      'The FAQ’s questions are the Help centre’s articles, and the home page’s challenge board is the live list from Challenges — change them there. An article switched to “app only” in the Help centre stays off the website.',
       '“Refresh the website now” asks the site to re-read every page, for after a deploy or when a change has not shown.',
     ],
     writes: ['Ask the website to refresh'],
@@ -908,6 +909,7 @@ export const sectionGuides: SectionGuide[] = [
       'Write a token instead of a figure that lives elsewhere: {{graceDays}}, {{coinValue}}, {{challengeCount}}, {{email}}, {{phone}}… The Tokens card lists them with what each says today; click one to copy it.',
       'Text may carry two marks: **bold** and [a link](/privacy). Nothing else is formatting — no HTML.',
       'Icons are picked from the list the website can draw. Questions on the home page are picked from the Help centre, in the order you pick them.',
+      'On Home, “Sections and their order” moves the sections below the hero and switches any of them off. A hidden section’s links leave the header menu, the footer and the announcement bar with it; Download can move but not be hidden, because “Get the app” points at it.',
       'History lists every save; Restore makes an old one live again as a new save. “Back to the shipped copy” returns to the words the site shipped with.',
     ],
     writes: ['Save a page (live at once)', 'Restore an earlier version', 'Go back to the shipped copy'],

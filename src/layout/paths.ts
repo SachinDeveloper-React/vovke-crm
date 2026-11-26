@@ -123,5 +123,14 @@ export const paths = {
     config: `${ROOTS.DASHBOARD}/config`,
     /** The support email and numbers, the address, and every public link (RULES P21). */
     contact: `${ROOTS.DASHBOARD}/contact`,
+    /** The public website, page by page, its documents, and its contact form's messages (RULES P22). */
+    website: {
+      root: `${ROOTS.DASHBOARD}/website`,
+      page: (key: string) => `${ROOTS.DASHBOARD}/website/pages/${encodeURIComponent(key)}` as const,
+      documents: `${ROOTS.DASHBOARD}/website/documents`,
+      document: (slug: string) => `${ROOTS.DASHBOARD}/website/documents/${encodeURIComponent(slug)}` as const,
+      enquiries: `${ROOTS.DASHBOARD}/website/enquiries`,
+      enquiry: (id: string) => `${ROOTS.DASHBOARD}/website/enquiries/${encodeURIComponent(id)}` as const,
+    },
   },
 } as const;

@@ -304,7 +304,10 @@ export async function adminTry<T>(path: string, query?: Query): Promise<{ data: 
   }
 }
 
-export type WriteResult<T> = { ok: true; data: T } | { ok: false; error: string; code: string };
+export type WriteResult<T> =
+  | { ok: true; data: T }
+  /** `details` is the API's own, field by field — for a form that marks the box rather than only saying so. */
+  | { ok: false; error: string; code: string; details?: unknown };
 
 /**
  * The sentence to put in front of the operator.
@@ -347,7 +350,7 @@ export async function adminWrite<T>(
     const data = await call<T>(path, { method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     return { ok: true, data };
   } catch (error) {
-    if (error instanceof ApiError) return { ok: false, error: readableError(error), code: error.code };
+    if (error instanceof ApiError) return { ok: false, error: readableError(error), code: error.code, details: error.details };
     throw error;
   }
 }

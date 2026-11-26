@@ -180,6 +180,32 @@ export const navData: NavGroupData[] = [
     ],
   },
   {
+    subheader: 'Website',
+    items: [
+      {
+        title: 'Pages',
+        path: paths.dashboard.website.root,
+        permission: 'website.view',
+        icon: <Iconify icon="solar:global-bold-duotone" />,
+        caption: 'Every word on vokve.com, page by page',
+      },
+      {
+        title: 'Documents',
+        path: paths.dashboard.website.documents,
+        permission: 'website.view',
+        icon: <Iconify icon="solar:document-text-bold-duotone" />,
+        caption: 'Privacy, terms, every policy — and new ones',
+      },
+      {
+        title: 'Enquiries',
+        path: paths.dashboard.website.enquiries,
+        permission: 'enquiries.view',
+        icon: <Iconify icon="solar:inbox-line-bold-duotone" />,
+        caption: 'Messages from the contact form',
+      },
+    ],
+  },
+  {
     subheader: 'System',
     items: [
       {

@@ -54,6 +54,7 @@ export const GUIDE_GROUPS = [
   'One member',
   'Shop',
   'Fitness & food',
+  'Website',
   'System',
   'Team',
   'Decide',
@@ -873,6 +874,118 @@ export const sectionGuides: SectionGuide[] = [
       'A screen with nothing in rotation draws no card at all. That is correct behaviour, and the page counts those screens so it is not a surprise.',
       'The screens are a closed list: each one is a card built for it in the app, so a new place for a quote is an app release.',
       'A heading is only drawn by the reminder and vital cards. On the quote cards the line is the whole thing.',
+    ],
+  },
+  // ── Website ─────────────────────────────────────────────────────────────
+  {
+    pattern: '/dashboard/website',
+    group: 'Website',
+    title: 'Website',
+    question: 'What does vokve.com say, and who changed it last?',
+    what:
+      'Every page of the public website — the header and footer, Home (with How it works, Features, Challenges, Fair play), About, FAQ, Contact, the legal hub, Delete your account, the licences and the invite-link page — and whether each still says what the site shipped with. The website reads all of it from the API, so a save here is a change on the site with no deploy.',
+    how: [
+      'Press Edit on a page to open its form. Each section of the page is a fold; open the one you came for.',
+      'The contact details, store links and social profiles are not here: they are on Contact & links, and every page fills them in.',
+      'The FAQ’s questions are the Help centre’s articles, and the home page’s challenge board is the live list from Challenges — change them there.',
+      '“Refresh the website now” asks the site to re-read every page, for after a deploy or when a change has not shown.',
+    ],
+    writes: ['Ask the website to refresh'],
+    careful: [
+      'A save shows on the site at once only when the API’s SITE_REVALIDATE_URL and SITE_REVALIDATE_SECRET are set; otherwise within the hour. The banner says which.',
+      '“Needs fixing” means a saved page no longer fits its shape after an update — the site is showing the shipped copy until it is saved again.',
+    ],
+  },
+  {
+    pattern: '/dashboard/website/pages/:key',
+    group: 'Website',
+    title: 'Website page',
+    question: 'How do I change what this page of the website says?',
+    what:
+      'The page’s every word, as a form: one fold per section, a box per line, a list with add / move / remove where the page has a list, a switch where a section can be left out. The form is drawn from the shape the API checks, so it offers nothing the website could not draw.',
+    how: [
+      'Change what you need, then Save and publish. Nothing is written before that, and Discard throws away what you typed since the last save.',
+      'Write a token instead of a figure that lives elsewhere: {{graceDays}}, {{coinValue}}, {{challengeCount}}, {{email}}, {{phone}}… The Tokens card lists them with what each says today; click one to copy it.',
+      'Text may carry two marks: **bold** and [a link](/privacy). Nothing else is formatting — no HTML.',
+      'Icons are picked from the list the website can draw. Questions on the home page are picked from the Help centre, in the order you pick them.',
+      'History lists every save; Restore makes an old one live again as a new save. “Back to the shipped copy” returns to the words the site shipped with.',
+    ],
+    writes: ['Save a page (live at once)', 'Restore an earlier version', 'Go back to the shipped copy'],
+    careful: [
+      'Saving publishes. There is no draft — read it back on the website after saving (View on the website).',
+      'If somebody else saved the page after you opened it, your save is refused rather than overwriting theirs. Reload, then make your change again.',
+      'A box in red is one the website could not draw: an empty title, a link that is not a path or a web address, a token nobody fills ({{grceDays}}). Nothing is saved until all are fixed.',
+    ],
+  },
+  {
+    pattern: '/dashboard/website/documents',
+    group: 'Website',
+    title: 'Documents',
+    question: 'Where are the Privacy Policy and the terms, and how do I add another policy?',
+    what:
+      'Every text page the website serves at its own address: the five it shipped with (privacy, terms, coins & fair play, refunds, shipping) and any written here since. Each has its version, its dates, its sections, and how the legal hub lists it.',
+    how: [
+      'Press Edit to change one. Its form has the title, the version and dates, “The short version” highlights, and the sections, each made of paragraphs, lists, callouts, tables and definitions.',
+      'To add one, give it a title and an address (cookie-policy → vokve.com/cookie-policy). It starts hidden; switch “Published” on and save when it is ready.',
+      'Start from a copy of another document when the new one is a variation of it (a revised policy to publish later).',
+    ],
+    writes: ['Create a document', 'Edit, hide or publish one', 'Delete one written here'],
+    careful: [
+      'The Privacy Policy and the terms are linked from the app and the store listings: they cannot be hidden or deleted.',
+      'The five shipped documents cannot be deleted, only hidden — and put back to their shipped words.',
+      'Move “Last updated” when the meaning of a policy changes, not for a typo: it is the date readers are told.',
+    ],
+  },
+  {
+    pattern: '/dashboard/website/documents/:slug',
+    group: 'Website',
+    title: 'Document',
+    question: 'How do I change this policy?',
+    what: 'One document, as a form: its title and dates, the short version, each section and its blocks, and how the legal hub lists it.',
+    how: [
+      'Each section has an anchor id (it becomes vokve.com/privacy#your-choices) — keep it when you only change the words, so old links still land.',
+      'A block’s Kind switches between paragraph, list, callout, table and definitions; the words come across where they fit.',
+      'Save and publish puts it live at once; History keeps every save.',
+    ],
+    writes: ['Save a document', 'Restore an earlier version', 'Back to the shipped words', 'Delete one written here'],
+    careful: [
+      'A document written here and deleted answers “not found” from that moment; its last words stay in History.',
+      'The policies are drafts written from what the app does. Have them read by a lawyer before relying on them.',
+    ],
+  },
+  {
+    pattern: '/dashboard/website/enquiries',
+    group: 'Website',
+    title: 'Enquiries',
+    question: 'Who wrote to us from the website, and is anybody waiting?',
+    what:
+      'Messages sent from the contact form on vokve.com/contact: name, email, optional phone, what it is about, and the message. Where the email belongs to a member, the row says so. These are not support tickets — most senders do not have the app.',
+    how: [
+      '“Waiting” shows new and being-handled messages, newest first. Open one to read it, answer it, and close it.',
+      'Search by name, email or words in the message; Show switches to answered, closed or spam.',
+    ],
+    writes: [],
+    careful: [
+      'Nothing is emailed to the team when a message arrives — this page is the inbox. The support mailbox shares its daily sending limit with sign-in codes, and a burst of spam must not cost a member their code.',
+      'The form limits each visitor to a few messages an hour and each email address to five a day, and quietly drops anything a bot fills in.',
+    ],
+  },
+  {
+    pattern: '/dashboard/website/enquiries/:enquiryId',
+    group: 'Website',
+    title: 'Enquiry',
+    question: 'What does this person want, and what did we tell them?',
+    what:
+      'One message from the contact form: what they wrote, who they are (with their account, if they have one), every answer given, the team’s own note, and anything else they sent from the same address.',
+    how: [
+      'Answer by email from here: it goes as plain text, starting with their name, signed with the company name, with their message quoted, and their reply comes back to the support address.',
+      'If you answered some other way — a call, the support mailbox — choose “Write down an answer given elsewhere”, so it shows as handled.',
+      'Set the state (being handled, closed, spam) and keep a note for the team; the note is never sent.',
+    ],
+    writes: ['Email an answer', 'Log an answer given elsewhere', 'Change the state or the note', 'Delete the message'],
+    careful: [
+      'Sending needs email set up on the API; without it only logging is offered.',
+      'Delete removes their words and every answer for good — for spam, or when somebody asks to be forgotten.',
     ],
   },
   {
